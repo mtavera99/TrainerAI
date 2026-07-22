@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { ArrowLeft, Check, Info, Plus, Trash2, Timer } from 'lucide-react'
 import type {
   LoggedExercise,
@@ -64,6 +64,19 @@ export default function SessionLogger({
     () => existing ?? buildDraft(day, week, state.sessions),
   )
   const [openInfo, setOpenInfo] = useState<string | null>(null)
+
+  // Autoguardado: cada cambio se persiste como borrador para no perder
+  // nada al cambiar de pestaña o salir. Se omite el primer render (el
+  // borrador recién creado y vacío no se guarda hasta que escribas algo).
+  const firstRender = useRef(true)
+  useEffect(() => {
+    if (firstRender.current) {
+      firstRender.current = false
+      return
+    }
+    saveSession(session)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session])
 
   const updateSet = (
     exId: string,
