@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { ArrowLeft, Check, Info, Plus, Trash2, Timer } from 'lucide-react'
+import { AlertTriangle, ArrowLeft, Check, Info, Plus, Trash2, Timer } from 'lucide-react'
 import type {
   LoggedExercise,
   LoggedSet,
+  ProgressionAction,
   SessionLog,
   WorkoutDayTemplate,
 } from '../types'
@@ -161,6 +162,11 @@ export default function SessionLogger({
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
+                    {ex.optionLabel && (
+                      <span className="chip bg-slate-700 text-slate-200 font-semibold">
+                        {ex.optionLabel}
+                      </span>
+                    )}
                     <h3 className="font-bold">{ex.name}</h3>
                     {ex.primary && (
                       <span className="chip bg-brand-500/15 text-brand-300">principal</span>
@@ -170,7 +176,13 @@ export default function SessionLogger({
                     <Muscle>{ex.muscle}</Muscle>
                     <Muscle>{ex.equipment}</Muscle>
                     {ex.unilateral && <Muscle>por lado</Muscle>}
+                    {ex.emphasis && <Muscle>énfasis {ex.emphasis}</Muscle>}
                   </div>
+                  {ex.optionLabel && (
+                    <p className="text-[11px] text-amber-300/80 mt-1.5">
+                      Haz solo una de las dos opciones y registra únicamente esa.
+                    </p>
+                  )}
                 </div>
                 {ex.note && (
                   <button
@@ -187,18 +199,49 @@ export default function SessionLogger({
               <div className="mt-3 rounded-xl bg-slate-800/60 border border-slate-700/60 p-3">
                 <div className="flex items-center gap-3 text-sm flex-wrap">
                   <span className="font-semibold text-brand-300">
-                    {p.sets} × {p.repMin}-{p.repMax} {unit}
+                    {p.sets} × {p.targetReps ?? `${p.repMin}-${p.repMax}`} {unit}
                   </span>
                   <span className="text-slate-400">RIR {p.targetRIR}</span>
                   <span className="flex items-center gap-1 text-slate-400">
                     <Timer size={13} /> {p.restSec}s
                   </span>
                   {p.suggestedWeight !== undefined && !ex.timeBased && (
-                    <span className="chip bg-emerald-500/15 text-emerald-300">
-                      sugerido {p.suggestedWeight} kg
+                    <span className="chip bg-emerald-500/15 text-emerald-300 font-semibold">
+                      {p.suggestedWeight} kg
                     </span>
                   )}
+                  <ActionChip action={p.action} />
+                  {p.addedSets ? (
+                    <span className="chip bg-sky-500/15 text-sky-300">
+                      +{p.addedSets} serie{p.addedSets > 1 ? 's' : ''} esta fase
+                    </span>
+                  ) : null}
                 </div>
+
+                {(p.lastTop || p.e1rm) && (
+                  <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-500 flex-wrap">
+                    {p.lastTop && (
+                      <span>
+                        Última vez (S{p.lastTop.week}):{' '}
+                        <span className="text-slate-400">
+                          {p.lastTop.weight} kg × {p.lastTop.reps} · RIR {p.lastTop.rir}
+                        </span>
+                      </span>
+                    )}
+                    {p.e1rm ? (
+                      <span>
+                        1RM est.: <span className="text-slate-400">{p.e1rm} kg</span>
+                      </span>
+                    ) : null}
+                  </div>
+                )}
+
+                {p.alert && (
+                  <p className="mt-2 flex items-start gap-1.5 text-xs text-amber-300 bg-amber-500/10 rounded-lg p-2">
+                    <AlertTriangle size={13} className="shrink-0 mt-0.5" /> {p.alert}
+                  </p>
+                )}
+
                 <p className="text-xs text-slate-400 mt-2 leading-relaxed">💡 {p.rationale}</p>
               </div>
 
@@ -322,6 +365,24 @@ export default function SessionLogger({
       )}
     </div>
   )
+}
+
+const ACTION_CHIPS: Record<ProgressionAction, { label: string; cls: string }> = {
+  'primera-vez': { label: 'calibrar', cls: 'bg-slate-700 text-slate-300' },
+  'subir-peso': { label: '↑ sube peso', cls: 'bg-emerald-500/15 text-emerald-300' },
+  'sumar-reps': { label: '+ reps', cls: 'bg-sky-500/15 text-sky-300' },
+  'ajustar-por-rir': { label: 'carga corta', cls: 'bg-amber-500/15 text-amber-300' },
+  'romper-estancamiento': {
+    label: 'romper estancamiento',
+    cls: 'bg-rose-500/15 text-rose-300',
+  },
+  descarga: { label: 'descarga', cls: 'bg-violet-500/15 text-violet-300' },
+}
+
+function ActionChip({ action }: { action: ProgressionAction }) {
+  const a = ACTION_CHIPS[action]
+  if (!a) return null
+  return <span className={`chip ${a.cls}`}>{a.label}</span>
 }
 
 function NumInput({

@@ -95,15 +95,23 @@ export default function Perfil() {
           <Info size={16} className="text-brand-400 shrink-0 mt-0.5" />
           <span>
             Bloque de {state.blockLengthWeeks} semanas · {WORKOUT_DAYS.length} días de fuerza +
-            fútbol (viernes) + 3 salidas de running. Frecuencia alta en espalda, deltoide lateral
-            y antebrazo (tus prioridades).
+            fútbol (viernes) + 2 salidas de running. Prioridad nº1 la pierna: cuádriceps e isquios
+            2x/semana. Las salidas de running caen en días de tren superior para no robarle
+            recuperación a las piernas.
           </span>
         </div>
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 space-y-2.5">
           {WEEK_SCHEDULE.map((s) => (
-            <li key={s.day} className="flex items-center gap-3 text-sm">
-              <span className="text-slate-400 w-20 shrink-0">{s.day}</span>
-              <span className="text-slate-100">{s.activity}</span>
+            <li key={s.day} className="text-sm">
+              <div className="flex items-start gap-3">
+                <span className="text-slate-400 w-20 shrink-0">{s.day}</span>
+                <span className="text-slate-100">{s.activity}</span>
+              </div>
+              {s.note && (
+                <p className="text-xs text-slate-500 mt-0.5 ml-[5.75rem] leading-relaxed">
+                  {s.note}
+                </p>
+              )}
             </li>
           ))}
         </ul>
