@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import {
+  CalendarDays,
   Footprints,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +21,7 @@ import { useApp } from '../context/AppContext'
 import { RUNNING_CUES, runningWeek } from '../data/running'
 import type { RunLog, RunType } from '../types'
 import { shortDate, todayISO, uid } from '../lib/format'
-import { EmptyState, SectionTitle } from '../components/ui'
+import { EmptyState, PageHeader, SectionTitle, StatCard } from '../components/ui'
 
 const TYPE_COLORS: Record<RunType, string> = {
   Intervalos: 'bg-sky-500/15 text-sky-300',
@@ -43,37 +44,47 @@ export default function Running() {
 
   return (
     <div className="space-y-5">
-      <header className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold flex items-center gap-2">
-          <Footprints className="text-orange-400" /> Running
-        </h1>
-        <span className="chip bg-orange-500/15 text-orange-300">objetivo 5 km</span>
-      </header>
+      <PageHeader
+        title="Running"
+        icon={<Footprints className="text-orange-400" size={24} />}
+        right={<span className="chip bg-orange-500/15 text-orange-300">objetivo 5 km</span>}
+      />
 
       {/* Distancia máxima */}
-      <div className="grid grid-cols-2 gap-3">
-        <div className="card p-4">
-          <div className="text-xs uppercase text-slate-400 tracking-wide">Mejor distancia</div>
-          <div className="text-2xl font-extrabold text-orange-400 mt-1">
-            {best.toFixed(2)} <span className="text-base text-slate-400">km</span>
-          </div>
-        </div>
-        <div className="card p-4">
-          <div className="text-xs uppercase text-slate-400 tracking-wide">Salidas totales</div>
-          <div className="text-2xl font-extrabold mt-1">{state.runs.length}</div>
-        </div>
+      <div className="grid grid-cols-2 gap-2.5">
+        <StatCard
+          label="Mejor distancia"
+          value={
+            <>
+              {best.toFixed(2)}
+              <span className="text-sm text-slate-400 font-bold"> km</span>
+            </>
+          }
+          accent="text-orange-400"
+        />
+        <StatCard label="Salidas totales" value={state.runs.length} accent="text-slate-100" />
       </div>
 
       {/* Selector de semana */}
-      <div className="card p-3 flex items-center justify-between">
-        <button onClick={() => setCurrentWeek(week - 1)} disabled={week <= 1} className="btn-ghost !px-3 !py-2">
+      <div className="card p-2.5 flex items-center justify-between">
+        <button
+          onClick={() => setCurrentWeek(week - 1)}
+          disabled={week <= 1}
+          className="btn-ghost !px-3 !py-2.5"
+          aria-label="Semana anterior"
+        >
           <ChevronLeft size={18} />
         </button>
-        <div className="text-center">
-          <div className="text-xs text-slate-400 uppercase tracking-wide">Plan semana {week}</div>
-          <div className="font-semibold text-sm">{rw.focus}</div>
+        <div className="text-center min-w-0 px-2">
+          <div className="section-label">Plan semana {week}</div>
+          <div className="font-bold text-sm mt-0.5 truncate">{rw.focus}</div>
         </div>
-        <button onClick={() => setCurrentWeek(week + 1)} disabled={week >= state.blockLengthWeeks} className="btn-ghost !px-3 !py-2">
+        <button
+          onClick={() => setCurrentWeek(week + 1)}
+          disabled={week >= state.blockLengthWeeks}
+          className="btn-ghost !px-3 !py-2.5"
+          aria-label="Semana siguiente"
+        >
           <ChevronRight size={18} />
         </button>
       </div>
@@ -81,14 +92,43 @@ export default function Running() {
       {/* Sesiones de la semana */}
       <div className="space-y-2">
         {rw.sessions.map((s) => (
-          <div key={s.id} className="card p-4">
-            <div className="flex items-center gap-2">
+          <div
+            key={s.id}
+            className={`card p-4 ${s.optional ? 'border-dashed opacity-80' : ''}`}
+          >
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="font-bold text-orange-300">{s.day}</span>
+              {s.optional ? (
+                <span className="chip bg-slate-700 text-slate-300">opcional</span>
+              ) : (
+                <span className="chip bg-orange-500/15 text-orange-300">fija</span>
+              )}
               <span className={`chip ${TYPE_COLORS[s.type]}`}>{s.type}</span>
               <span className="text-xs text-slate-400 ml-auto">~{s.durationMin} min</span>
             </div>
             <p className="text-sm text-slate-200 mt-2">{s.description}</p>
+            {s.optional && (
+              <p className="text-xs text-slate-500 mt-1.5">
+                Solo si llegas sobrado de energía. El viernes juegas al fútbol, así que si dudas,
+                sáltatela.
+              </p>
+            )}
           </div>
         ))}
+      </div>
+
+      {/* Por qué esos días */}
+      <div className="card p-4 flex items-start gap-2">
+        <CalendarDays size={16} className="text-orange-400 shrink-0 mt-0.5" />
+        <p className="text-xs text-slate-400 leading-relaxed">
+          Las tres salidas caen en <span className="text-slate-200">días de tren superior</span>{' '}
+          (martes empuje, jueves espalda, sábado hombro) y ninguna el mismo día que Pierna A o
+          Pierna B. Toda la intensidad va el <span className="text-slate-200">sábado</span>,
+          único día con 48 h sin pierna detrás. El{' '}
+          <span className="text-slate-200">martes es la víspera de Pierna B</span>, así que es
+          siempre trote conversacional, nunca series: con 5 días de pesas y el fútbol del viernes
+          no hay ningún hueco perfecto, y este es el compromiso que menos te cuesta.
+        </p>
       </div>
 
       {/* Técnica */}
@@ -229,7 +269,7 @@ function RunForm({
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
           placeholder="Cómo te sentiste, tibial, respiración…"
-          className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-orange-500"
+          className="input resize-none"
         />
       </Field>
       <div className="flex gap-3">
@@ -259,8 +299,8 @@ function RunForm({
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs text-slate-400">{label}</span>
-      <div className="mt-1">{children}</div>
+      <span className="section-label">{label}</span>
+      <div className="mt-1.5">{children}</div>
     </label>
   )
 }
@@ -274,7 +314,7 @@ function RunNum({ value, onChange, step }: { value: number; onChange: (v: number
       step={step}
       onFocus={(e) => e.currentTarget.select()}
       onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-      className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-orange-500"
+      className="input font-semibold nums"
     />
   )
 }

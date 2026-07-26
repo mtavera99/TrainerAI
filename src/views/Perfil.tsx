@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Download, Upload, RotateCcw, Save, Info } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { WORKOUT_DAYS, WEEK_SCHEDULE } from '../data/program'
-import { SectionTitle } from '../components/ui'
+import { PageHeader, SectionTitle } from '../components/ui'
 
 export default function Perfil() {
   const { state, updateProfile, logBodyweight, exportJSON, importJSON, resetAll } = useApp()
@@ -38,7 +38,7 @@ export default function Perfil() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-extrabold">Perfil</h1>
+      <PageHeader title="Perfil" subtitle={state.profile.name} />
 
       {/* Datos */}
       <div className="card p-4 space-y-3">
@@ -161,8 +161,8 @@ export default function Perfil() {
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <label className="block">
-      <span className="text-xs text-slate-400">{label}</span>
-      <div className="mt-1">{children}</div>
+      <span className="section-label">{label}</span>
+      <div className="mt-1.5">{children}</div>
     </label>
   )
 }
@@ -172,7 +172,7 @@ function TextInput({ value, onChange }: { value: string; onChange: (v: string) =
     <input
       value={value}
       onChange={(e) => onChange(e.target.value)}
-      className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-brand-500"
+      className="input"
     />
   )
 }
@@ -194,7 +194,7 @@ function NumInput({
       step={step}
       onFocus={(e) => e.currentTarget.select()}
       onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
-      className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2 text-sm outline-none focus:border-brand-500"
+      className="input font-semibold nums"
     />
   )
 }

@@ -57,8 +57,14 @@ import type {
 //  · Correr —más que ir en bici— es la modalidad que más interfiere con la
 //    hipertrofia de pierna. Antes había una salida el MISMO día que Pierna B
 //    y otra el día siguiente, con el fútbol justo después: las piernas nunca
-//    recuperaban. Ahora las salidas van en días de tren superior (martes y
-//    sábado) y el domingo se descansa antes del lunes de pierna.
+//    recuperaban. Ahora las salidas van en días de tren superior:
+//      MARTES (fija, siempre conversacional) · JUEVES (opcional, muy suave)
+//      SÁBADO (la larga y toda la intensidad de la semana)
+//    y el domingo se descansa antes del lunes de pierna. El día concreto de
+//    cada salida está en los datos del plan (data/running.ts, campo `day`),
+//    no solo en este comentario, para que app y calendario no se contradigan.
+//    El martes cae la víspera de Pierna B: con 5 días de pesas + fútbol no hay
+//    hueco libre de compromisos, así que ese día NUNCA lleva series.
 //  · El fútbol del viernes hace de sesión de alta intensidad de la semana.
 // ============================================================
 
@@ -96,10 +102,10 @@ export const WEEK_SCHEDULE: ScheduleSlot[] = [
   },
   {
     day: 'Martes',
-    activity: 'Empuje · Pecho/Hombro/Tríceps + running',
+    activity: 'Empuje · Pecho/Hombro/Tríceps + running (fijo)',
     workoutId: 'd2',
     kind: 'fuerza',
-    note: 'La salida de running va aquí, en día de tren superior: no compite con las piernas.',
+    note: 'Salida de running principal de mitad de semana, en día de tren superior: no compite con las piernas.',
   },
   {
     day: 'Miércoles',
@@ -110,10 +116,10 @@ export const WEEK_SCHEDULE: ScheduleSlot[] = [
   },
   {
     day: 'Jueves',
-    activity: 'Espalda + Bíceps',
+    activity: 'Espalda + Bíceps + running (opcional)',
     workoutId: 'd3',
     kind: 'fuerza',
-    note: 'Sin correr: las piernas descansan la víspera del fútbol.',
+    note: 'La salida del jueves es opcional y siempre muy suave: mañana juegas al fútbol y no interesa llegar con las piernas cargadas. Si dudas, sáltatela.',
   },
   {
     day: 'Viernes',
@@ -123,10 +129,10 @@ export const WEEK_SCHEDULE: ScheduleSlot[] = [
   },
   {
     day: 'Sábado',
-    activity: 'Hombro + Brazos + running largo',
+    activity: 'Hombro + Brazos + running largo (fijo)',
     workoutId: 'd5',
     kind: 'fuerza',
-    note: 'La tirada que construye los 5 km, otra vez en día de tren superior.',
+    note: 'La tirada larga que construye los 5 km. Va aquí porque es el único día con 48 h sin pierna detrás (domingo de descanso).',
   },
   {
     day: 'Domingo',
