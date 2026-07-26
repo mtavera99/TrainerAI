@@ -215,6 +215,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         loadStep: 5,
         primary: true,
         emphasis: 'estirado',
+        secondary: { Glúteo: 0.5, Aductores: 0.3 },
         note: 'ELIGE A O B, nunca las dos. El péndulo es la opción preferente: la carga va sobre los hombros con la cadera guiada, así que respeta tu glúteo/lumbar derecho mejor que el hack. Baja hasta donde el rango sea profundo pero SIN que la pelvis se meta hacia dentro: el cuádriceps crece más cuando trabaja estirado, pero no a costa de la lumbar. 3 min de descanso: es la serie que más importa de la semana para tus piernas.',
       },
       {
@@ -232,6 +233,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         loadStep: 5,
         primary: true,
         emphasis: 'estirado',
+        secondary: { Glúteo: 0.5, Aductores: 0.3 },
         note: 'Alternativa al péndulo si ese día la máquina está ocupada o notas el glúteo derecho. Pies algo altos y torso pegado al respaldo. Registra solo UNA de las dos opciones: la app lleva el historial de cada máquina por separado porque los kilos no son comparables entre ellas.',
       },
       {
@@ -247,6 +249,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         loadStep: 5,
         unilateral: true,
         emphasis: 'estirado',
+        secondary: { Glúteo: 0.5 },
         note: 'Unilateral a propósito: corrige la asimetría que arrastras del lado derecho y carga la pierna sin comprimir la columna. Acerca la rodilla al pecho todo lo que te permita la cadera derecha sin dolor; si molesta, recorta el rango antes que el peso.',
       },
       {
@@ -324,6 +327,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 120,
         loadStep: 2.5,
         primary: true,
+        secondary: { 'Hombro anterior': 0.5, Tríceps: 0.5 },
         note: 'Estable, como te gusta. Retrae escápulas y baja controlando.',
       },
       {
@@ -337,6 +341,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 120,
         loadStep: 2.5,
         primary: true,
+        secondary: { 'Hombro anterior': 0.5, Tríceps: 0.5 },
         note: 'Banco a ~30° para pecho superior (tu prioridad). Estira abajo, no choques arriba.',
       },
       {
@@ -399,6 +404,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 12,
         restSec: 90,
         loadStep: 2.5,
+        secondary: { Pecho: 0.5, 'Hombro anterior': 0.3 },
         note: 'Tríceps en patrón compuesto. Codos cerca del cuerpo.',
       },
       {
@@ -435,6 +441,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 120,
         loadStep: 5,
         primary: true,
+        secondary: { Bíceps: 0.5 },
         note: 'Foco en amplitud: codos abajo y afuera, siente el dorsal. Pecho arriba, sin balanceo.',
       },
       {
@@ -448,6 +455,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 120,
         loadStep: 5,
         primary: true,
+        secondary: { Bíceps: 0.5, 'Hombro posterior': 0.3 },
         note: 'Apoyo en pecho = cero estrés lumbar. Retrae escápula, grosor de espalda media.',
       },
       {
@@ -566,6 +574,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         loadStep: 5,
         primary: true,
         emphasis: 'acortado',
+        secondary: { Femoral: 0.5 },
         note: 'Doble función: masa de glúteo y blindaje de la lumbar. Barbilla metida, costillas hacia abajo, empuje con talones y PARA cuando la cadera esté alineada: no hiperextiendas, que es justo lo que te irrita el lado derecho.',
       },
       {
@@ -580,6 +589,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 120,
         loadStep: 5,
         emphasis: 'estirado',
+        secondary: { Glúteo: 0.5, Aductores: 0.3 },
         note: '2ª dosis semanal de cuádriceps: esto es lo que faltaba en el programa anterior, donde el cuádriceps solo se entrenaba los lunes. Pies a media altura y baja lo más profundo que puedas manteniendo la lumbar pegada al respaldo. Aquí no buscamos el récord de discos, buscamos rango.',
       },
       {
@@ -633,7 +643,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'press-militar-smith',
         name: 'Press militar en Smith (barra)',
-        muscle: 'Hombro',
+        muscle: 'Hombro anterior',
         equipment: 'Smith',
         sets: 3,
         repMin: 8,
@@ -641,7 +651,8 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 120,
         loadStep: 2.5,
         primary: true,
-        note: 'Estable, como te gusta. Baja a la clavícula sin forzar el hombro.',
+        secondary: { 'Hombro lateral': 0.5, Tríceps: 0.5 },
+        note: 'Estable, como te gusta. Baja a la clavícula sin forzar el hombro. Solo 3 series directas a propósito: el deltoides anterior ya se lleva mucho trabajo de los press del día de empuje.',
       },
       {
         id: 'lateral-maquina-d5',

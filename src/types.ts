@@ -7,7 +7,7 @@ export type MuscleGroup =
   | 'Pecho'
   | 'Hombro lateral'
   | 'Hombro posterior'
-  | 'Hombro'
+  | 'Hombro anterior'
   | 'Cuádriceps'
   | 'Femoral'
   | 'Glúteo'
@@ -73,6 +73,17 @@ export interface ExerciseTemplate {
   optionLabel?: string
   /** Dónde genera más tensión (para explicar el porqué de la selección) */
   emphasis?: LengthEmphasis
+  /**
+   * Músculos que este ejercicio trabaja de forma INDIRECTA, con el peso que se
+   * le asigna a cada serie (0-1). Un press de pecho no entrena el deltoides
+   * anterior como lo hace un press militar, pero tampoco lo deja a cero: la
+   * convención habitual es contar media serie.
+   *
+   * Sin esto la auditoría de volumen miente por defecto: el deltoides anterior
+   * aparecía con 3 series semanales cuando en realidad se lleva también las de
+   * todos los press del día de empuje.
+   */
+  secondary?: Partial<Record<MuscleGroup, number>>
 }
 
 /** Un día de entrenamiento del programa base */
