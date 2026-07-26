@@ -40,30 +40,46 @@ export default function App() {
 
   return (
     <div className="min-h-full max-w-2xl mx-auto flex flex-col">
-      <main className="flex-1 px-4 pb-28 pt-5">
-        {tab === 'dashboard' && <Dashboard onOpenDay={openDay} goRunning={() => setTab('running')} />}
-        {tab === 'entreno' && (
-          <Entreno initialDay={goToDay} clearInitialDay={() => setGoToDay(undefined)} />
-        )}
-        {tab === 'historial' && <Historial />}
-        {tab === 'running' && <Running />}
-        {tab === 'perfil' && <Perfil />}
+      <main className="flex-1 px-4 pt-6 pb-nav">
+        {/* La `key` fuerza la animación de entrada al cambiar de pestaña */}
+        <div key={tab} className="animate-fade-up">
+          {tab === 'dashboard' && (
+            <Dashboard onOpenDay={openDay} goRunning={() => setTab('running')} />
+          )}
+          {tab === 'entreno' && (
+            <Entreno initialDay={goToDay} clearInitialDay={() => setGoToDay(undefined)} />
+          )}
+          {tab === 'historial' && <Historial />}
+          {tab === 'running' && <Running />}
+          {tab === 'perfil' && <Perfil />}
+        </div>
       </main>
 
-      <nav className="fixed bottom-0 inset-x-0 z-20 border-t border-slate-800 bg-slate-950/90 backdrop-blur">
-        <div className="max-w-2xl mx-auto grid grid-cols-5">
+      <nav className="fixed bottom-0 inset-x-0 z-30 border-t border-slate-800/80 bg-slate-950/80 backdrop-blur-xl pb-safe">
+        <div className="max-w-2xl mx-auto grid grid-cols-5 px-1">
           {TABS.map(({ id, label, icon: Icon }) => {
             const active = tab === id
             return (
               <button
                 key={id}
                 onClick={() => setTab(id)}
-                className={`flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium transition-colors ${
-                  active ? 'text-brand-400' : 'text-slate-500 hover:text-slate-300'
-                }`}
+                aria-current={active ? 'page' : undefined}
+                className="relative flex flex-col items-center gap-1 pt-3 pb-2.5 text-[11px] font-semibold transition-colors active:scale-95 duration-150"
               >
-                <Icon size={22} strokeWidth={active ? 2.4 : 2} />
-                {label}
+                {/* Indicador superior de la pestaña activa */}
+                <span
+                  className={`absolute top-0 h-[3px] w-9 rounded-b-full bg-brand-400 transition-all duration-200 ${
+                    active ? 'opacity-100 scale-x-100' : 'opacity-0 scale-x-0'
+                  }`}
+                />
+                <span
+                  className={`grid place-items-center h-8 w-8 rounded-xl transition-colors duration-200 ${
+                    active ? 'bg-brand-500/15 text-brand-300' : 'text-slate-500'
+                  }`}
+                >
+                  <Icon size={20} strokeWidth={active ? 2.5 : 2} />
+                </span>
+                <span className={active ? 'text-brand-300' : 'text-slate-500'}>{label}</span>
               </button>
             )
           })}

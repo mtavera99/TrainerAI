@@ -43,11 +43,28 @@ lumbar → espalda → hombros → mantener pecho → integrar running. Juegas *
 | Sábado | Hombro + Brazos · press militar Smith, laterales, pull over, predicador, copa, catana, antebrazo | 22 |
 | Domingo | Descanso total | — |
 
-Las salidas de running van el **martes y el sábado**, en días de tren superior: correr es la
-modalidad de cardio que más interfiere con la hipertrofia de pierna, así que no se programa ni
-el mismo día ni la víspera de un día de pierna. El plan de la pestaña *Running* lista 3 salidas
-por semana; haz las dos continuas (martes y sábado) y deja la de intervalos como opcional: **el
-fútbol del viernes ya es tu sesión de alta intensidad** y de sprints repetidos.
+### Qué día se corre
+
+| Día | Salida | Obligatoria |
+|---|---|---|
+| **Martes** (empuje) | Salida principal de mitad de semana | Sí |
+| **Jueves** (espalda) | Muy suave, regenerativa | **No, opcional** |
+| **Sábado** (hombro) | La tirada larga, la que construye los 5 km | Sí |
+
+Cada salida lleva su día asignado en `src/data/running.ts` y se muestra en la pestaña *Running*,
+así que el plan y el calendario no pueden contradecirse.
+
+Las tres caen en **días de tren superior** y ninguna el mismo día que Pierna A o Pierna B:
+correr es la modalidad de cardio que más interfiere con la hipertrofia de pierna. El domingo se
+descansa del todo para llegar fresco al lunes.
+
+**Toda la intensidad va el sábado**, que es el único día con 48 h sin pierna detrás. El martes,
+en cambio, es la víspera de Pierna B: con 5 días de pesas y el fútbol del viernes no existe un
+hueco sin ningún compromiso, así que el martes es **siempre trote conversacional, nunca series
+ni ritmo 5K**. Un rodaje suave 24 h antes apenas afecta a la fuerza; una sesión de calidad sí.
+
+La del **jueves es opcional y siempre suave** porque el viernes juegas al fútbol: **el fútbol ya
+es tu sesión de alta intensidad** y de sprints repetidos de la semana. Si dudas, sáltatela.
 
 ### Frecuencia y volumen reales
 

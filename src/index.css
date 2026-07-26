@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,6 +6,8 @@
 
 :root {
   color-scheme: dark;
+  /* Alto real de la barra de navegación + safe area del iPhone */
+  --nav-h: 4.25rem;
 }
 
 html,
@@ -18,6 +20,22 @@ body {
   @apply bg-slate-950 text-slate-100 antialiased;
   margin: 0;
   overscroll-behavior-y: none;
+  /* Fondo con un halo sutil para que no sea un negro plano */
+  background-image:
+    radial-gradient(60rem 40rem at 50% -10%, rgb(37 99 235 / 0.13), transparent 70%),
+    radial-gradient(40rem 30rem at 110% 10%, rgb(16 185 129 / 0.07), transparent 70%);
+  background-attachment: fixed;
+}
+
+/* Evita el zoom de iOS al enfocar inputs (necesita >=16px) */
+input,
+textarea,
+select {
+  font-size: 16px;
+}
+
+::selection {
+  @apply bg-brand-500/30;
 }
 
 /* Scrollbar sutil */
@@ -44,18 +62,69 @@ input[type='number'] {
 
 @layer components {
   .card {
-    @apply bg-slate-900/70 border border-slate-800 rounded-2xl;
+    @apply bg-slate-900/70 border border-slate-800 rounded-2xl shadow-card;
   }
+  /* Tarjeta pulsable: da feedback al tocar, importante en móvil */
+  .card-tap {
+    @apply card transition-all duration-150 active:scale-[0.985] hover:border-slate-700 hover:bg-slate-900;
+  }
+
   .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center gap-2 rounded-xl font-semibold transition-all duration-150
+           active:scale-[0.97] disabled:opacity-40 disabled:cursor-not-allowed disabled:active:scale-100
+           focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-500/60;
   }
   .btn-primary {
-    @apply btn bg-brand-600 hover:bg-brand-500 text-white px-4 py-2.5;
+    @apply btn bg-brand-600 hover:bg-brand-500 text-white px-4 py-3 shadow-glow;
   }
   .btn-ghost {
-    @apply btn bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-2.5;
+    @apply btn bg-slate-800 hover:bg-slate-700 text-slate-100 px-4 py-3;
   }
+  .btn-danger {
+    @apply btn bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 px-4 py-2.5;
+  }
+
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-medium;
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-semibold leading-none;
+  }
+
+  .input {
+    @apply w-full rounded-xl bg-slate-800/80 border border-slate-700 px-3 py-2.5 text-sm outline-none
+           transition-colors placeholder:text-slate-500
+           focus:border-brand-500 focus:bg-slate-800 focus:ring-2 focus:ring-brand-500/25;
+  }
+
+  /* Cifras alineadas: evita que los números "bailen" al cambiar */
+  .nums {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+  }
+
+  .section-label {
+    @apply text-[11px] font-bold uppercase tracking-wider text-slate-500;
+  }
+}
+
+@layer utilities {
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  /* Reserva sitio para la barra inferior fija */
+  .pb-nav {
+    padding-bottom: calc(var(--nav-h) + env(safe-area-inset-bottom, 0px) + 1.5rem);
+  }
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+}
+
+/* Respeta a quien prefiere menos movimiento */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

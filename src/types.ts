@@ -156,6 +156,10 @@ export interface RunSessionTemplate {
   description: string
   /** Duración estimada en minutos */
   durationMin: number
+  /** Día de la semana en el que toca esta salida */
+  day: string
+  /** Salida opcional: solo si vas sobrado de energía */
+  optional?: boolean
 }
 
 export interface RunLog {

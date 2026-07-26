@@ -15,7 +15,7 @@ import { useApp } from '../context/AppContext'
 import { WORKOUT_DAYS, findDay } from '../data/program'
 import { estimated1RM, exerciseVolume } from '../lib/progression'
 import { shortDate } from '../lib/format'
-import { EmptyState, SectionTitle } from '../components/ui'
+import { EmptyState, PageHeader, SectionTitle } from '../components/ui'
 
 const CHART_TT = {
   contentStyle: { background: '#0f172a', border: '1px solid #334155', borderRadius: 12 },
@@ -86,7 +86,10 @@ export default function Historial() {
 
   return (
     <div className="space-y-5">
-      <h1 className="text-2xl font-extrabold">Progreso</h1>
+      <PageHeader
+        title="Progreso"
+        subtitle={`${completedSessions.length} sesiones completadas`}
+      />
 
       {/* Peso corporal */}
       <div className="card p-4">
@@ -141,7 +144,7 @@ export default function Historial() {
         <select
           value={exId}
           onChange={(e) => setExId(e.target.value)}
-          className="w-full rounded-xl bg-slate-800 border border-slate-700 px-3 py-2.5 text-sm outline-none focus:border-brand-500 mb-3"
+          className="input mb-3"
         >
           {allExercises.map((e) => (
             <option key={e.id} value={e.id}>
