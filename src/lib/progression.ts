@@ -2,19 +2,82 @@ import type {
   ExercisePrescription,
   ExerciseTemplate,
   LoggedExercise,
+  PhaseConfig,
+  ProgressionAction,
   SessionLog,
   WorkoutDayTemplate,
 } from '../types'
-import { phaseForWeek } from '../data/program'
+import {
+  exerciseIdsForMovement,
+  movementIdOf,
+  phaseForWeek,
+} from '../data/program'
 
-function roundToHalf(n: number): number {
-  return Math.round(n * 2) / 2
+// ============================================================
+// MOTOR DE PROGRESIÓN
+// ------------------------------------------------------------
+// La idea: tú registras kg, reps y RIR. A partir de ahí la app estima tu
+// fuerza real en ese movimiento (1RM estimado corregido por el RIR que
+// anotaste) y despeja hacia atrás qué carga necesitas para cumplir el
+// objetivo de la semana siguiente. No es "sube 2,5 kg y reza": si dejaste
+// 3 reps en recámara cuando el objetivo era 1, el salto será mayor; si te
+// quedaste corto, se ajusta a la baja.
+//
+// Además:
+//  · El historial es POR MOVIMIENTO, no por casilla del día. Las laterales
+//    de martes/jueves/sábado son el mismo ejercicio y progresan juntas.
+//  · Las series suben dentro del bloque en los músculos prioritarios.
+//  · Si llevas 2 sesiones sin mejorar, lo detecta y cambia de estrategia
+//    en lugar de pedirte el mismo peso indefinidamente.
+// ============================================================
+
+/** Techo de subida por sesión: más de esto casi nunca es real, es error de registro */
+const MAX_WEEKLY_INCREASE = 0.12
+/** Suelo: no bajamos más de esto salvo descarga o estancamiento */
+const MAX_WEEKLY_DECREASE = 0.08
+/** Cuánto se recorta la carga para romper un estancamiento */
+const STAGNATION_BACKOFF = 0.07
+
+function roundToStep(weight: number, step: number): number {
+  if (!Number.isFinite(weight) || weight <= 0) return 0
+  const s = step && step > 0 ? step : 0.5
+  return Math.round(weight / s) * s
 }
 
-/** 1RM estimado (fórmula de Epley) */
+function round1(n: number): number {
+  return Math.round(n * 10) / 10
+}
+
+/** 1RM estimado (Epley) a partir de una serie llevada al fallo */
 export function estimated1RM(weight: number, reps: number): number {
   if (weight <= 0 || reps <= 0) return 0
   return weight * (1 + reps / 30)
+}
+
+/**
+ * 1RM estimado corrigiendo por RIR: si hiciste 10 reps dejando 2 en
+ * recámara, tu verdadero máximo a ese peso eran ~12 reps. Sin esta
+ * corrección, entrenar con RIR alto hace parecer que eres más débil de lo
+ * que eres y la app te subestima la carga semana tras semana.
+ */
+export function estimated1RMWithRIR(
+  weight: number,
+  reps: number,
+  rir: number,
+): number {
+  const repsToFailure = reps + Math.max(0, rir || 0)
+  return estimated1RM(weight, repsToFailure)
+}
+
+/**
+ * Carga necesaria para hacer `reps` repeticiones dejando `rir` en recámara,
+ * dado un 1RM estimado. Es la fórmula de Epley despejada: esto es lo que
+ * convierte "lo que hiciste" en "lo que deberías cargar".
+ */
+export function loadForTarget(e1rm: number, reps: number, rir: number): number {
+  const repsToFailure = reps + Math.max(0, rir || 0)
+  if (e1rm <= 0 || repsToFailure <= 0) return 0
+  return e1rm / (1 + repsToFailure / 30)
 }
 
 /** Volumen total de un ejercicio registrado (kg movidos) */
@@ -41,115 +104,344 @@ export function lastSessionForDay(
     .sort((a, b) => b.week - a.week || b.date.localeCompare(a.date))[0]
 }
 
-interface LastPerf {
-  topWeight: number
-  minRepsAtTop: number
-  avgRir: number
-  hasData: boolean
-}
+// ------------------------------------------------------------
+// Historial por movimiento
+// ------------------------------------------------------------
 
-function analyzeLast(
-  last: SessionLog | undefined,
-  exerciseId: string,
-): LastPerf {
-  const empty: LastPerf = {
-    topWeight: 0,
-    minRepsAtTop: 0,
-    avgRir: 0,
-    hasData: false,
-  }
-  if (!last) return empty
-  const le = last.exercises.find((e) => e.exerciseId === exerciseId)
-  if (!le) return empty
-  const working = le.sets.filter((s) => s.done && s.weight > 0 && s.reps > 0)
-  if (working.length === 0) return empty
-  const topWeight = Math.max(...working.map((s) => s.weight))
-  const atTop = working.filter((s) => s.weight === topWeight)
-  const minRepsAtTop = Math.min(...atTop.map((s) => s.reps))
-  const avgRir =
-    atTop.reduce((a, s) => a + s.rir, 0) / atTop.length
-  return { topWeight, minRepsAtTop, avgRir, hasData: true }
+/** Resumen de lo que hiciste en un movimiento en una sesión */
+export interface MovementPerformance {
+  week: number
+  date: string
+  /** Serie más pesada realizada */
+  topWeight: number
+  /** Reps de la serie más floja hecha con el peso top (lo que manda para subir) */
+  minRepsAtTop: number
+  /** Reps de la mejor serie con el peso top */
+  maxRepsAtTop: number
+  /** RIR medio de las series al peso top */
+  avgRirAtTop: number
+  /** Mejor 1RM estimado de la sesión (corregido por RIR) */
+  e1rm: number
+  /** Series efectivas registradas */
+  setsDone: number
 }
 
 /**
- * Calcula la prescripción de un ejercicio para la semana `week`
- * aplicando doble progresión + periodización de RIR + descarga.
+ * Historial del movimiento ordenado de más reciente a más antiguo,
+ * mirando TODOS los días donde aparece ese movimiento.
+ */
+export function movementHistory(
+  sessions: SessionLog[],
+  exerciseId: string,
+  beforeWeek?: number,
+): MovementPerformance[] {
+  const ids = new Set(exerciseIdsForMovement(movementIdOf(exerciseId)))
+  const out: MovementPerformance[] = []
+
+  for (const s of sessions) {
+    if (!s.completed) continue
+    if (beforeWeek !== undefined && s.week >= beforeWeek) continue
+
+    const logged = s.exercises.filter((e) => ids.has(e.exerciseId))
+    if (logged.length === 0) continue
+
+    const working = logged
+      .flatMap((e) => e.sets)
+      .filter((st) => st.done && st.weight > 0 && st.reps > 0)
+    if (working.length === 0) continue
+
+    const topWeight = Math.max(...working.map((st) => st.weight))
+    const atTop = working.filter((st) => st.weight === topWeight)
+    const e1rm = Math.max(
+      ...working.map((st) => estimated1RMWithRIR(st.weight, st.reps, st.rir)),
+    )
+
+    out.push({
+      week: s.week,
+      date: s.date,
+      topWeight,
+      minRepsAtTop: Math.min(...atTop.map((st) => st.reps)),
+      maxRepsAtTop: Math.max(...atTop.map((st) => st.reps)),
+      avgRirAtTop:
+        atTop.reduce((a, st) => a + (st.rir || 0), 0) / atTop.length,
+      e1rm,
+      setsDone: working.length,
+    })
+  }
+
+  return out.sort((a, b) => b.week - a.week || b.date.localeCompare(a.date))
+}
+
+// ------------------------------------------------------------
+// Escalado de volumen dentro del bloque
+// ------------------------------------------------------------
+
+/**
+ * Series planificadas para la semana. Los ejercicios con `maxSets` (las
+ * piernas) ganan una serie cada bloque de 3 semanas hasta su techo; el resto
+ * se mantiene fijo. En descarga se recorta ~40%.
+ *
+ * AUTORREGULACIÓN: el volumen extra solo se aplica si ese movimiento SIGUE
+ * PROGRESANDO. Añadir series encima de un ejercicio que ya está estancado no
+ * produce más músculo, produce más fatiga: si detectamos estancamiento, el
+ * escalado se retiene un escalón hasta que la carga vuelva a subir. Así el
+ * techo de volumen lo marcan tus datos y no un número que yo haya elegido.
+ */
+export function plannedSets(
+  ex: ExerciseTemplate,
+  week: number,
+  phase: PhaseConfig = phaseForWeek(week),
+  sessions?: SessionLog[],
+): { sets: number; added: number; held: boolean } {
+  if (phase.deload) {
+    return { sets: Math.max(2, Math.round(ex.sets * 0.6)), added: 0, held: false }
+  }
+
+  const ceiling = ex.maxSets ?? ex.sets
+  let bump = Math.max(0, Math.floor((week - 1) / 3))
+  let held = false
+
+  if (bump > 0 && ceiling > ex.sets && sessions && sessions.length > 0) {
+    const history = movementHistory(sessions, ex.id, week)
+    if (checkStagnation(history).stagnant) {
+      bump -= 1
+      held = true
+    }
+  }
+
+  const sets = Math.min(ceiling, ex.sets + bump)
+  return { sets, added: sets - ex.sets, held }
+}
+
+// ------------------------------------------------------------
+// Detección de estancamiento
+// ------------------------------------------------------------
+
+export interface StagnationCheck {
+  stagnant: boolean
+  regressing: boolean
+  sessionsWithoutProgress: number
+}
+
+/**
+ * Compara el 1RM estimado de las últimas sesiones. Dos sesiones seguidas
+ * sin mejorar es la señal de que hay que cambiar algo (carga, descanso o
+ * ejercicio), no de insistir con lo mismo.
+ */
+export function checkStagnation(
+  history: MovementPerformance[],
+): StagnationCheck {
+  if (history.length < 3) {
+    return { stagnant: false, regressing: false, sessionsWithoutProgress: 0 }
+  }
+
+  // Contamos cuántas de las sesiones más recientes NO superaron el mejor
+  // registro que ya existía antes de ellas. Margen del 0,5% para que el
+  // redondeo de los discos no cuente como estancamiento.
+  let without = 0
+  for (let i = 0; i < history.length - 1; i++) {
+    const bestBefore = Math.max(
+      ...history.slice(i + 1).map((h) => h.e1rm),
+    )
+    if (history[i].e1rm > bestBefore * 1.005) break
+    without++
+  }
+
+  return {
+    stagnant: without >= 2,
+    regressing: history[0].e1rm < history[1].e1rm * 0.97,
+    sessionsWithoutProgress: without,
+  }
+}
+
+// ------------------------------------------------------------
+// Prescripción
+// ------------------------------------------------------------
+
+function clampWeight(
+  target: number,
+  reference: number,
+  step: number,
+  opts: { allowBigDrop?: boolean } = {},
+): number {
+  const max = reference * (1 + MAX_WEEKLY_INCREASE)
+  const min = opts.allowBigDrop
+    ? 0
+    : reference * (1 - MAX_WEEKLY_DECREASE)
+  return roundToStep(Math.min(max, Math.max(min, target)), step)
+}
+
+/**
+ * Calcula la prescripción de un ejercicio para la semana `week`:
+ * carga y reps objetivo, series según la fase, y el porqué.
  */
 export function prescribeExercise(
   ex: ExerciseTemplate,
   week: number,
   sessions: SessionLog[],
-  dayId: string,
+  _dayId?: string,
 ): ExercisePrescription {
   const phase = phaseForWeek(week)
-  const last = lastSessionForDay(sessions, dayId, week)
-  const perf = analyzeLast(last, ex.id)
+  const targetRIR = phase.targetRIR
+  const { sets, added, held } = plannedSets(ex, week, phase, sessions)
+  const history = movementHistory(sessions, ex.id, week)
+  const last = history[0]
 
-  // Semana de descarga
-  if (phase.deload) {
-    const deloadSets = Math.max(2, Math.round(ex.sets * 0.6))
-    const suggested = perf.hasData
-      ? roundToHalf(perf.topWeight * 0.9)
-      : undefined
-    return {
-      exerciseId: ex.id,
-      sets: deloadSets,
-      repMin: ex.repMin,
-      repMax: ex.repMax,
-      targetRIR: phase.targetRIR,
-      restSec: ex.restSec,
-      suggestedWeight: suggested,
-      rationale: perf.hasData
-        ? `Descarga: baja a ~${suggested} kg y ${deloadSets} series, RIR ${phase.targetRIR}. Toca frenar para asimilar el bloque.`
-        : `Descarga: ${deloadSets} series suaves, RIR ${phase.targetRIR}. Sin prisa.`,
-    }
-  }
-
-  // Sin historial previo: primera vez que se hace el ejercicio
-  if (!perf.hasData) {
-    return {
-      exerciseId: ex.id,
-      sets: ex.sets,
-      repMin: ex.repMin,
-      repMax: ex.repMax,
-      targetRIR: phase.targetRIR,
-      restSec: ex.restSec,
-      suggestedWeight: undefined,
-      rationale: `Primera vez: elige un peso con el que hagas ${ex.repMin}-${ex.repMax} reps dejando ${phase.targetRIR} en recámara (RIR ${phase.targetRIR}). Anótalo y a partir de ahí progresamos.`,
-    }
-  }
-
-  // Doble progresión
-  const hitTopOfRange = perf.minRepsAtTop >= ex.repMax
-  const roomByRir = perf.avgRir > phase.targetRIR + 0.5
-
-  if (hitTopOfRange) {
-    const newWeight = roundToHalf(perf.topWeight + ex.loadStep)
-    return {
-      exerciseId: ex.id,
-      sets: ex.sets,
-      repMin: ex.repMin,
-      repMax: ex.repMax,
-      targetRIR: phase.targetRIR,
-      restSec: ex.restSec,
-      suggestedWeight: newWeight,
-      rationale: `Completaste ${ex.repMax}+ reps a ${perf.topWeight} kg en todas las series → sube a ${newWeight} kg y vuelve a apuntar a ${ex.repMin} reps. Sobrecarga progresiva.`,
-    }
-  }
-
-  // No llegó al tope de reps: mantener peso y sumar repeticiones
-  const extra = roomByRir
-    ? ` Te sobró margen (RIR ~${perf.avgRir.toFixed(0)}), así que aprieta un poco más.`
-    : ''
-  return {
+  const base = {
     exerciseId: ex.id,
-    sets: ex.sets,
+    sets,
     repMin: ex.repMin,
     repMax: ex.repMax,
-    targetRIR: phase.targetRIR,
+    targetRIR,
     restSec: ex.restSec,
-    suggestedWeight: perf.topWeight,
-    rationale: `Mantén ${perf.topWeight} kg y suma 1-2 reps por serie hacia ${ex.repMax} (la vez pasada tu serie más floja fue ${perf.minRepsAtTop} reps).${extra}`,
+    addedSets: added > 0 ? added : undefined,
+    lastTop: last
+      ? {
+          weight: last.topWeight,
+          reps: last.minRepsAtTop,
+          rir: round1(last.avgRirAtTop),
+          week: last.week,
+        }
+      : undefined,
+  }
+
+  // --- Ejercicios sin carga externa (colgado, peso corporal) ---
+  if (ex.loadStep === 0 && ex.equipment === 'Peso corporal') {
+    const action: ProgressionAction = last ? 'sumar-reps' : 'primera-vez'
+    return {
+      ...base,
+      suggestedWeight: undefined,
+      targetReps: last
+        ? Math.min(ex.repMax, last.maxRepsAtTop + 1)
+        : ex.repMin,
+      action,
+      rationale: last
+        ? `La última vez llegaste a ${last.maxRepsAtTop} reps. Apunta a ${Math.min(
+            ex.repMax,
+            last.maxRepsAtTop + 1,
+          )} con la misma calidad de movimiento; cuando superes ${ex.repMax} en todas las series, añade lastre.`
+        : `Sin lastre: haz ${ex.repMin}-${ex.repMax} reps controladas y anótalas para tener referencia.`,
+    }
+  }
+
+  // --- Semana de descarga ---
+  if (phase.deload) {
+    const suggested = last
+      ? roundToStep(last.topWeight * 0.9, ex.loadStep)
+      : undefined
+    return {
+      ...base,
+      suggestedWeight: suggested,
+      targetReps: ex.repMin,
+      e1rm: last ? Math.round(last.e1rm) : undefined,
+      action: 'descarga',
+      rationale: last
+        ? `Descarga: ${suggested} kg (90% de tus ${last.topWeight} kg) × ${ex.repMin}-${ex.repMax} y ${sets} series, RIR ${targetRIR}. Debe sobrarte de todo: es la semana en la que el músculo construido en el bloque se materializa.`
+        : `Descarga: ${sets} series suaves con RIR ${targetRIR}. Sin buscar récords.`,
+    }
+  }
+
+  // --- Primera vez con el movimiento ---
+  if (!last) {
+    return {
+      ...base,
+      suggestedWeight: undefined,
+      targetReps: ex.repMax,
+      action: 'primera-vez',
+      rationale: `Primera vez con este ejercicio: busca un peso con el que llegues a ${ex.repMax} reps dejando ${targetRIR} en recámara (RIR ${targetRIR}). Prueba una serie de aproximación, ajusta y anota lo que hagas de verdad: a partir de esa cifra la app ya calcula sola.`,
+    }
+  }
+
+  const e1rm = last.e1rm
+  const stag = checkStagnation(history)
+
+  // --- Retroceso o estancamiento de 2+ sesiones ---
+  if (stag.stagnant || stag.regressing) {
+    const target = last.topWeight * (1 - STAGNATION_BACKOFF)
+    const suggested = roundToStep(target, ex.loadStep)
+    return {
+      ...base,
+      suggestedWeight: suggested,
+      targetReps: ex.repMax,
+      e1rm: Math.round(e1rm),
+      action: 'romper-estancamiento',
+      alert: stag.regressing
+        ? 'Has retrocedido respecto a la sesión anterior.'
+        : `${stag.sessionsWithoutProgress} sesiones sin mejorar en este ejercicio.`,
+      rationale:
+        `Llevas ${stag.sessionsWithoutProgress} sesiones sin avanzar aquí, así que insistir con ${last.topWeight} kg no va a funcionar. Baja a ${suggested} kg y busca ${ex.repMax} reps limpias con técnica perfecta y descanso completo (${ex.restSec}s): reconstruyes desde una carga que sí puedes dominar y en 2 semanas superas el tope anterior. Si vuelve a atascarse, revisa sueño, comida y si estás llegando de verdad a RIR ${targetRIR}.` +
+        (held
+          ? ` También he retenido la serie extra de volumen que tocaba en esta fase: no tiene sentido añadir más trabajo encima de un ejercicio que no avanza. Volverá cuando la carga vuelva a subir.`
+          : ''),
+    }
+  }
+
+  // --- Alcanzó el tope del rango: toca subir carga ---
+  if (last.minRepsAtTop >= ex.repMax) {
+    const ideal = loadForTarget(e1rm, ex.repMin, targetRIR)
+    const floor = last.topWeight + ex.loadStep
+    const suggested = clampWeight(
+      Math.max(ideal, floor),
+      last.topWeight,
+      ex.loadStep,
+    )
+    const jump = round1(suggested - last.topWeight)
+    return {
+      ...base,
+      suggestedWeight: suggested,
+      targetReps: ex.repMin,
+      e1rm: Math.round(e1rm),
+      action: 'subir-peso',
+      rationale: `Cerraste las ${sets} series a ${last.topWeight} kg con ${last.minRepsAtTop}+ reps (RIR ~${round1(
+        last.avgRirAtTop,
+      )}), o sea que tu 1RM estimado ahí ya es ~${Math.round(
+        e1rm,
+      )} kg. Sube a ${suggested} kg (+${jump}) y vuelve al pie del rango: ${ex.repMin} reps a RIR ${targetRIR}. Cuando vuelvas a llegar a ${ex.repMax}, subimos otra vez.`,
+    }
+  }
+
+  // --- Dejó demasiado margen: la carga se queda corta ---
+  if (last.avgRirAtTop >= targetRIR + 1.5) {
+    const ideal = loadForTarget(e1rm, last.minRepsAtTop, targetRIR)
+    // Redondeamos HACIA ARRIBA: si el ideal cae entre dos discos, con este
+    // margen de RIR interesa el de arriba. Redondeando a la baja el peso se
+    // quedaba clavado y el aviso no servía de nada.
+    const capped = Math.min(ideal, last.topWeight * (1 + MAX_WEEKLY_INCREASE))
+    const suggested =
+      capped > last.topWeight * 1.01
+        ? Math.max(
+            last.topWeight + ex.loadStep,
+            roundToStep(capped, ex.loadStep),
+          )
+        : last.topWeight
+    if (suggested > last.topWeight) {
+      return {
+        ...base,
+        suggestedWeight: suggested,
+        targetReps: Math.max(ex.repMin, last.minRepsAtTop),
+        e1rm: Math.round(e1rm),
+        action: 'ajustar-por-rir',
+        rationale: `Hiciste ${last.minRepsAtTop} reps a ${last.topWeight} kg pero anotaste RIR ~${round1(
+          last.avgRirAtTop,
+        )}: te sobraron ${round1(
+          last.avgRirAtTop - targetRIR,
+        )} reps respecto al objetivo de esta fase (RIR ${targetRIR}). Con esa carga no estás estimulando lo suficiente. Ve a ${suggested} kg manteniendo las ${last.minRepsAtTop} reps: ahí sí acabarás a RIR ${targetRIR}.`,
+      }
+    }
+  }
+
+  // --- Camino normal: mismo peso, más reps (doble progresión) ---
+  const targetReps = Math.min(ex.repMax, last.minRepsAtTop + 1)
+  const repsLeft = ex.repMax - last.minRepsAtTop
+  return {
+    ...base,
+    suggestedWeight: last.topWeight,
+    targetReps,
+    e1rm: Math.round(e1rm),
+    action: 'sumar-reps',
+    rationale: `Mantén ${last.topWeight} kg y sube a ${targetReps} reps en todas las series (tu serie más floja fueron ${last.minRepsAtTop}). Te ${
+      repsLeft === 1 ? 'queda 1 rep' : `quedan ${repsLeft} reps`
+    } para tocar el tope del rango y ganarte el aumento de carga. Añadir reps con el mismo peso es sobrecarga progresiva igual que añadir kilos.`,
   }
 }
 

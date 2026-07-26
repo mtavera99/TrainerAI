@@ -26,17 +26,32 @@ export type Equipment =
   | 'Barra'
   | 'Peso corporal'
 
+/** Énfasis de longitud muscular del ejercicio (dónde genera más tensión) */
+export type LengthEmphasis = 'estirado' | 'medio' | 'acortado'
+
 /** Plantilla de un ejercicio dentro del programa base */
 export interface ExerciseTemplate {
   id: string
+  /**
+   * Identifica el MOVIMIENTO, no la casilla del día. Dos entradas en días
+   * distintos con el mismo `movementId` comparten historial y progresan
+   * juntas (ej. las elevaciones laterales que haces 3 veces por semana).
+   * Si se omite, se usa el propio `id`.
+   */
+  movementId?: string
   name: string
   muscle: MuscleGroup
   equipment: Equipment
   /** Rango de repeticiones objetivo (doble progresión) */
   repMin: number
   repMax: number
-  /** Series de trabajo base */
+  /** Series de trabajo base (semanas 1-3) */
   sets: number
+  /**
+   * Techo de series cuando el bloque escala volumen. Si es mayor que `sets`,
+   * la app añade series al avanzar las fases (músculos prioritarios).
+   */
+  maxSets?: number
   /** Descanso recomendado entre series (segundos) */
   restSec: number
   /** Incremento mínimo de carga sugerido (kg) para este equipo */
@@ -49,6 +64,15 @@ export interface ExerciseTemplate {
   note?: string
   /** Si es un ejercicio principal (prioridad de progresión) */
   primary?: boolean
+  /**
+   * Si está presente, este ejercicio es la ALTERNATIVA del ejercicio con ese
+   * id: se hace uno de los dos, nunca los dos. No suma al volumen planificado.
+   */
+  alternativeOf?: string
+  /** Etiqueta de la opción cuando forma parte de un par A/B */
+  optionLabel?: string
+  /** Dónde genera más tensión (para explicar el porqué de la selección) */
+  emphasis?: LengthEmphasis
 }
 
 /** Un día de entrenamiento del programa base */
@@ -60,6 +84,15 @@ export interface WorkoutDayTemplate {
   exercises: ExerciseTemplate[]
 }
 
+/** Decisión que ha tomado el motor de progresión */
+export type ProgressionAction =
+  | 'primera-vez'
+  | 'subir-peso'
+  | 'sumar-reps'
+  | 'ajustar-por-rir'
+  | 'romper-estancamiento'
+  | 'descarga'
+
 /** Prescripción calculada para una semana concreta */
 export interface ExercisePrescription {
   exerciseId: string
@@ -70,8 +103,20 @@ export interface ExercisePrescription {
   restSec: number
   /** Peso sugerido para la semana (puede ser undefined si no hay historial) */
   suggestedWeight?: number
+  /** Reps concretas a las que apuntar con ese peso */
+  targetReps?: number
   /** Explicación de por qué se sugiere esto (progresión) */
   rationale: string
+  /** Qué ha decidido el motor */
+  action: ProgressionAction
+  /** 1RM estimado de referencia (a partir de reps + RIR de la última sesión) */
+  e1rm?: number
+  /** Aviso destacado (estancamiento, retroceso, exceso de fatiga) */
+  alert?: string
+  /** Series añadidas respecto a la base por el escalado de volumen */
+  addedSets?: number
+  /** Peso y reps de referencia de la última vez que hiciste el movimiento */
+  lastTop?: { weight: number; reps: number; rir: number; week: number }
 }
 
 // ---------- Registro de sesiones ----------

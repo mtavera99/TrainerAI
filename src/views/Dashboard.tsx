@@ -1,8 +1,21 @@
-import { CheckCircle2, Circle, ChevronRight, Flame, Footprints, Trophy } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import {
+  CheckCircle2,
+  Circle,
+  ChevronRight,
+  Flame,
+  Footprints,
+  Star,
+  Trophy,
+  TrendingUp,
+  Utensils,
+} from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { WORKOUT_DAYS, phaseForWeek } from '../data/program'
 import { runningWeek } from '../data/running'
-import { PhaseBadge, ProgressBar, StatCard } from '../components/ui'
+import { weeklyVolume, type MuscleVolumeRow, type VolumeStatus } from '../lib/volume'
+import { gainRateReport, nutritionTargets, type GainStatus } from '../lib/nutrition'
+import { PhaseBadge, ProgressBar, SectionTitle, StatCard } from '../components/ui'
 
 export default function Dashboard({
   onOpenDay,
@@ -24,6 +37,16 @@ export default function Dashboard({
   const rw = runningWeek(week)
 
   const firstName = state.profile.name.split(' ')[0]
+
+  const volume = useMemo(() => weeklyVolume(week, state.sessions), [week, state.sessions])
+  const gain = useMemo(
+    () => gainRateReport(state.profile, state.bodyweightLog),
+    [state.profile, state.bodyweightLog],
+  )
+  const targets = useMemo(
+    () => nutritionTargets(state.profile, gain.smoothedKg),
+    [state.profile, gain.smoothedKg],
+  )
 
   return (
     <div className="space-y-5">
@@ -107,6 +130,55 @@ export default function Dashboard({
         <ChevronRight className="text-slate-500" size={18} />
       </button>
 
+      {/* Auditoría de volumen */}
+      <VolumeCard rows={volume} />
+
+      {/* Ritmo de ganancia */}
+      <div className="card p-4">
+        <SectionTitle
+          right={
+            <span className="text-xs text-slate-400">
+              meta {state.profile.goalWeightKg} kg
+            </span>
+          }
+        >
+          Ritmo de ganancia
+        </SectionTitle>
+        <div className="flex items-baseline gap-2">
+          <TrendingUp size={18} className={GAIN_COLORS[gain.status]} />
+          <span className={`font-bold ${GAIN_COLORS[gain.status]}`}>{gain.headline}</span>
+        </div>
+        {gain.status !== 'sin-datos' && (
+          <div className="mt-2 flex items-center gap-4 text-sm">
+            <span>
+              <span className="text-slate-400 text-xs">tendencia </span>
+              <span className="font-semibold">
+                {gain.weeklyKg > 0 ? '+' : ''}
+                {gain.weeklyKg} kg/sem
+              </span>
+            </span>
+            <span className="text-slate-400 text-xs">({gain.weeklyPct}% / sem)</span>
+            <span className="text-slate-400 text-xs ml-auto">{gain.smoothedKg} kg</span>
+          </div>
+        )}
+        <p className="text-xs text-slate-400 mt-2 leading-relaxed">{gain.advice}</p>
+        {gain.weeksToGoal !== undefined && (
+          <p className="text-xs text-slate-500 mt-1">
+            A este ritmo llegas a {state.profile.goalWeightKg} kg en ~{gain.weeksToGoal} semanas.
+          </p>
+        )}
+        <div className="mt-3 flex items-center gap-2 text-xs text-slate-300 bg-slate-800/50 rounded-xl p-3">
+          <Utensils size={14} className="text-emerald-400 shrink-0" />
+          <span>
+            Objetivo diario: <span className="font-semibold">{targets.kcal} kcal</span> y{' '}
+            <span className="font-semibold">
+              {targets.proteinG[0]}-{targets.proteinG[1]} g
+            </span>{' '}
+            de proteína. Sin esto, el programa no puede funcionar.
+          </span>
+        </div>
+      </div>
+
       {/* Objetivos */}
       <section className="card p-4">
         <h2 className="font-bold mb-3 flex items-center gap-2">
@@ -114,9 +186,10 @@ export default function Dashboard({
         </h2>
         <ul className="space-y-2 text-sm text-slate-200">
           <Goal icon={<Flame size={15} className="text-rose-400" />}>
-            Mejorar piernas sin dolor (péndulo, hack, isquios, hip thrust)
+            <span className="font-semibold">Piernas (prioridad nº1):</span> cuádriceps e isquios
+            2x/semana, sin cargar la lumbar
           </Goal>
-          <Goal icon={<Flame size={15} className="text-rose-400" />}>Espalda más ancha</Goal>
+          <Goal icon={<Flame size={15} className="text-rose-400" />}>Espalda más ancha (2x/sem)</Goal>
           <Goal icon={<Flame size={15} className="text-rose-400" />}>Hombros más redondos (laterales 3x/sem)</Goal>
           <Goal icon={<Footprints size={15} className="text-orange-400" />}>Correr 5 km continuos</Goal>
         </ul>
@@ -131,5 +204,80 @@ function Goal({ children, icon }: { children: React.ReactNode; icon: React.React
       <span className="mt-0.5">{icon}</span>
       <span>{children}</span>
     </li>
+  )
+}
+
+const GAIN_COLORS: Record<GainStatus, string> = {
+  'sin-datos': 'text-slate-400',
+  perdiendo: 'text-rose-400',
+  plano: 'text-amber-400',
+  lento: 'text-amber-300',
+  optimo: 'text-emerald-400',
+  rapido: 'text-orange-400',
+}
+
+const STATUS_STYLES: Record<VolumeStatus, { cls: string; label: string }> = {
+  bajo: { cls: 'bg-rose-500/15 text-rose-300', label: 'bajo' },
+  ok: { cls: 'bg-emerald-500/15 text-emerald-300', label: 'ok' },
+  alto: { cls: 'bg-amber-500/15 text-amber-300', label: 'alto' },
+}
+
+/**
+ * Series y frecuencia reales por músculo, calculadas desde el programa.
+ * Es la tarjeta que impide que la app vuelva a "prometer" una frecuencia que
+ * los ejercicios no cumplen.
+ */
+function VolumeCard({ rows }: { rows: MuscleVolumeRow[] }) {
+  const [showAll, setShowAll] = useState(false)
+  const lowOrPriority = rows.filter((r) => r.priority || r.status !== 'ok')
+  const visible = showAll ? rows : lowOrPriority
+  const low = rows.filter((r) => r.status === 'bajo')
+
+  return (
+    <div className="card p-4">
+      <SectionTitle right={<span className="text-xs text-slate-400">series · frecuencia</span>}>
+        Volumen semanal por músculo
+      </SectionTitle>
+
+      <div className="space-y-1.5">
+        {visible.map((r) => (
+          <div key={r.muscle} className="flex items-center gap-2 text-sm">
+            <span className="w-4 shrink-0">
+              {r.priority && <Star size={12} className="text-amber-400" fill="currentColor" />}
+            </span>
+            <span className="flex-1 min-w-0 truncate text-slate-200">{r.muscle}</span>
+            <span className="text-slate-400 text-xs w-14 text-right">
+              {r.target[0]}-{r.target[1]}
+            </span>
+            <span className="font-semibold w-14 text-right">{r.plannedSets}</span>
+            <span className="text-slate-400 text-xs w-8 text-right">{r.frequency}x</span>
+            <span className={`chip w-12 justify-center ${STATUS_STYLES[r.status].cls}`}>
+              {STATUS_STYLES[r.status].label}
+            </span>
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={() => setShowAll((v) => !v)}
+        className="mt-3 text-xs text-brand-400 font-medium hover:text-brand-300"
+      >
+        {showAll ? 'Ver solo prioritarios' : `Ver los ${rows.length} músculos`}
+      </button>
+
+      <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+        ⭐ = prioridad del bloque. La columna de la izquierda es el rango recomendado de series
+        directas por semana; el número en negrita es lo que el programa planifica de verdad esta
+        semana (contando el escalado de series de la fase).
+        {low.length > 0 && (
+          <>
+            {' '}
+            <span className="text-rose-300">
+              Por debajo del mínimo: {low.map((r) => r.muscle).join(', ')}.
+            </span>
+          </>
+        )}
+      </p>
+    </div>
   )
 }

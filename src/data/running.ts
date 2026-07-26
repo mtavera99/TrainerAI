@@ -5,6 +5,15 @@ import type { RunSessionTemplate } from '../types'
 // Basado en el punto de partida de Santiago (~20 min, aprendiendo
 // cadencia, apoyo de mediopié y respiración). Progresión conservadora
 // para NO irritar el tibial anterior ni la lesión de cadera.
+//
+// CÓMO ENCAJARLO CON LAS PIERNAS (prioridad nº1 del bloque):
+// El plan lista 3 salidas por semana, pero correr es la modalidad de cardio
+// que más interfiere con la hipertrofia de pierna. Con el calendario actual:
+//   · Salida CONTINUA  → martes (día de empuje)
+//   · Salida LARGA     → sábado (día de hombro/brazos)
+//   · Salida de INTERVALOS → opcional: el fútbol del viernes ya te da el
+//     estímulo de alta intensidad y sprints repetidos. Si la haces, que sea
+//     el sábado, nunca el día antes ni el mismo día de una sesión de pierna.
 // ============================================================
 
 export interface RunningWeek {
