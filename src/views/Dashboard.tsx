@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
 import {
+  AlertTriangle,
   CheckCircle2,
   Circle,
   ChevronRight,
@@ -15,9 +16,12 @@ import { WORKOUT_DAYS, phaseForWeek } from '../data/program'
 import { requiredRuns, runningWeek } from '../data/running'
 import { plannedSets } from '../lib/progression'
 import {
+  PER_SESSION_CEILING,
+  perSessionOverload,
   regionVolume,
   weeklyVolume,
   type MuscleVolumeRow,
+  type SessionOverload,
   type VolumeStatus,
 } from '../lib/volume'
 import { gainRateReport, nutritionTargets, type GainStatus } from '../lib/nutrition'
@@ -52,6 +56,7 @@ export default function Dashboard({
   const firstName = state.profile.name.split(' ')[0]
 
   const volume = useMemo(() => weeklyVolume(week, state.sessions), [week, state.sessions])
+  const overloads = useMemo(() => perSessionOverload(week), [week])
   const gain = useMemo(
     () => gainRateReport(state.profile, state.bodyweightLog),
     [state.profile, state.bodyweightLog],
@@ -174,7 +179,7 @@ export default function Dashboard({
       </button>
 
       {/* Auditoría de volumen */}
-      <VolumeCard rows={volume} deload={!!phase.deload} />
+      <VolumeCard rows={volume} deload={!!phase.deload} overloads={overloads} />
 
       {/* Ritmo de ganancia */}
       <div className="card p-4">
@@ -289,7 +294,15 @@ const STATUS_STYLES: Record<VolumeStatus, { cls: string; label: string }> = {
  * Es la tarjeta que impide que la app vuelva a "prometer" una frecuencia que
  * los ejercicios no cumplen.
  */
-function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean }) {
+function VolumeCard({
+  rows,
+  deload,
+  overloads,
+}: {
+  rows: MuscleVolumeRow[]
+  deload: boolean
+  overloads: SessionOverload[]
+}) {
   const [showAll, setShowAll] = useState(false)
   const visible = showAll ? rows : rows.filter((r) => r.priority || r.status !== 'ok')
   const low = rows.filter((r) => r.status === 'bajo')
@@ -309,7 +322,9 @@ function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean
         Volumen por músculo
       </SectionTitle>
 
-      {/* Totales por región: el hombro son 3 cabezas, no un músculo */}
+      {/* Totales por región. El rango va SIEMPRE al lado: sin él, un total de
+          28 de hombro se compara con la regla de "10-20 por músculo" y parece
+          una barbaridad, cuando son tres músculos sumados. */}
       <div className="grid grid-cols-3 gap-2 mb-4">
         {regions.map((g) => (
           <div key={g.label} className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-2.5">
@@ -321,12 +336,35 @@ function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean
               <span className="text-[10px] font-bold text-slate-500"> series</span>
             </div>
             <div className="text-[10px] text-slate-500 nums mt-0.5">
-              {g.directSets} directas
-              {g.indirectSets > 0 && ` + ${g.indirectSets} ind.`} · {g.frequency}x
+              rango {g.target[0]}-{g.target[1]} · {g.members.length} músculos
+            </div>
+            <div className="text-[10px] text-slate-500 nums">
+              {g.directSets} dir
+              {g.indirectSets > 0 && ` + ${g.indirectSets} ind`} · {g.frequency}x
             </div>
           </div>
         ))}
       </div>
+
+      {/* Segundo eje de calibración: reparto dentro de la semana */}
+      {overloads.length > 0 && (
+        <div className="mb-4 flex items-start gap-2 text-[11px] text-amber-300/90 bg-amber-500/10 border border-amber-500/20 rounded-xl p-2.5">
+          <AlertTriangle size={13} className="shrink-0 mt-0.5" />
+          <span className="leading-relaxed">
+            {overloads.map((o) => (
+              <span key={o.dayId + o.muscle}>
+                <span className="font-semibold">
+                  {o.muscle}: {o.fractionalSets} series en un solo día
+                </span>{' '}
+                ({o.dayName.split('·')[0].trim()}).{' '}
+              </span>
+            ))}
+            Por encima de ~{PER_SESSION_CEILING} series del mismo músculo en una sesión, añadir
+            más deja de aportar. El total semanal está bien; lo que está apelotonado es el
+            reparto.
+          </span>
+        </div>
+      )}
 
       <div className="space-y-2.5">
         {visible.map((r) => (
@@ -378,7 +416,9 @@ function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean
         ⭐ prioridad del bloque. El número grande es el volumen efectivo de la semana y, entre
         paréntesis, las series <span className="text-slate-400">directas + indirectas</span>: un
         press de pecho no entrena el deltoides anterior como un press militar, pero tampoco a
-        cero, así que cuenta media serie. La barra gris es el rango recomendado.
+        cero, así que cuenta media serie. Los rangos son{' '}
+        <span className="text-slate-400">por músculo</span>, nunca por región, y están calibrados
+        para nivel intermedio: 10-20 en los prioritarios y 8-16 en los de mantenimiento.
         {low.length > 0 && (
           <span className="text-rose-300">
             {' '}

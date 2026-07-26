@@ -81,12 +81,28 @@ entrenamiento y un músculo se queda corto, se ve al instante.
 | Espalda ⭐ | 2x | 13 |
 | Deltoide lateral ⭐ | 3x | 11 |
 | Antebrazo ⭐ | 3x | 9 |
-| Tríceps | 2x | 12 |
+| Tríceps | 2x | 11 |
 | Bíceps | 2x | 9 |
 | Core | 2x | 6 |
 | Aductores | 1x | 3 |
-| Pecho | 1x | 13 |
-| Hombro (press) / posterior | 1x | 3 / 4 |
+| Pecho | 1x | 11 |
+| Hombro anterior / posterior | 2x / 2x | 3 / 7 |
+
+### Cómo se cuenta el volumen
+
+Las cifras de arriba son **series directas**. La app compara el volumen
+**efectivo** = directas + 0,5 × indirectas, que es el método de conteo
+fraccionado validado en la literatura: un press de pecho sí estimula el
+deltoides anterior y el tríceps, pero no como un ejercicio dedicado.
+
+Dos referencias, no una:
+
+- **Semanal y por músculo:** 10-20 series efectivas en los prioritarios,
+  8-16 en los de mantenimiento. Los rangos son **por músculo, nunca por
+  región**: sumar las tres cabezas del hombro y compararlo con "10-20" es
+  el error que hace parecer excesivo un programa correcto.
+- **Por sesión:** más de ~11 series fraccionadas del mismo músculo en un
+  solo entreno deja de aportar. La app lo avisa cuando pasa.
 
 Pecho, hombro y brazos se quedan **1x a propósito**: el entreno de pecho te gusta y hombro y
 brazos los sientes bien, así que en este bloque solo se rediseñó la pierna. Está documentado

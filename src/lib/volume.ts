@@ -17,34 +17,63 @@ import { plannedSets } from './progression'
 // ============================================================
 
 /**
- * Rangos de series DIRECTAS por músculo y semana para un intermedio en
- * superávit. Son rangos amplios a propósito: la evidencia muestra una
- * relación dosis-respuesta con rendimientos decrecientes, no un número
- * mágico. El extremo alto se reserva para músculos prioritarios.
+ * Rangos de series EFECTIVAS (directas + 0,5 × indirectas) por músculo y
+ * semana, calibrados para un INTERMEDIO en superávit.
+ *
+ * OJO CON LA UNIDAD, que aquí estaba el error: la primera versión de estos
+ * rangos se escribió pensando en series DIRECTAS y luego se empezó a comparar
+ * contra el volumen efectivo, que es mayor. Al cambiar el numerador sin
+ * recalibrar el denominador, todo derivaba hacia arriba y el programa parecía
+ * más holgado de lo que era. Ahora ambos lados hablan de series efectivas.
+ *
+ * Referencias:
+ *  · La banda útil está en 10-20 series semanales POR MÚSCULO, con
+ *    hipertrofia detectable ya desde 4-10 y rendimientos decrecientes al
+ *    subir. Nada de esto es un número mágico: es una relación dosis-respuesta.
+ *  · Contar el trabajo indirecto como media serie ("fractional sets") es el
+ *    método que validó Schoenfeld et al. 2019 y el que usan las
+ *    meta-regresiones recientes de volumen.
+ *
+ * Por eso el techo aquí es 18-20 solo en los músculos PRIORITARIOS del
+ * bloque, y 12-16 en el resto: un intermedio no necesita empujar todos los
+ * músculos al máximo de la banda a la vez, porque la recuperación es
+ * sistémica y él además juega al fútbol y corre dos días.
  */
 export const VOLUME_TARGETS: Record<MuscleGroup, [number, number]> = {
+  // --- Prioridades del bloque: parte alta de la banda ---
   Cuádriceps: [12, 20],
-  Femoral: [8, 16],
-  Glúteo: [4, 12],
-  Aductores: [2, 8],
+  Femoral: [10, 18],
+  Glúteo: [8, 16],
+  Espalda: [12, 20],
+  'Hombro lateral': [10, 18],
+  Antebrazo: [6, 12], // punto débil, pero es un músculo pequeño
+  // --- Mantener y progresar: parte media ---
+  Pecho: [10, 18],
+  Bíceps: [8, 16],
+  Tríceps: [8, 16],
+  // Mínimo 8: con todo el volumen de press de pecho que hace, el deltoides
+  // posterior necesita ese suelo para equilibrar el hombro (estética y salud
+  // articular). Con el mínimo en 4, las 4 series que había salían "ok".
+  'Hombro posterior': [8, 14],
+  // Necesita poco trabajo DIRECTO porque se lleva media serie de cada press.
+  'Hombro anterior': [6, 12],
+  // --- Asistencia ---
   Gemelos: [6, 14],
-  Pecho: [8, 18],
-  Espalda: [10, 20],
-  'Hombro lateral': [8, 20],
-  // Mínimo 6, no 4: con 13 series de press de pecho más el press militar, el
-  // deltoides posterior necesita ese suelo para equilibrar el hombro (estética
-  // y salud articular). Con el mínimo en 4, las 4 series que había salían "ok"
-  // y escondían que era la cabeza peor atendida del programa.
-  'Hombro posterior': [6, 14],
-  // Necesita poco trabajo directo: se lleva media serie de cada press del día
-  // de empuje. Ese trabajo indirecto se cuenta, así que el rango es sobre el
-  // volumen EFECTIVO (directo + indirecto), no solo sobre las series directas.
-  'Hombro anterior': [4, 12],
-  Bíceps: [6, 16],
-  Tríceps: [6, 16],
-  Antebrazo: [4, 12],
-  Core: [4, 12],
+  Core: [6, 12],
+  Aductores: [4, 10],
 }
+
+/**
+ * Techo de series fraccionadas de un mismo músculo en UNA sesión.
+ *
+ * La meta-regresión de volumen por sesión sitúa el punto de rendimientos
+ * indetectables alrededor de 11 series fraccionadas por músculo y sesión:
+ * pasado ese punto, añadir series al mismo entreno deja de aportar. Es un
+ * segundo eje de calibración que el programa no estaba mirando, y que
+ * detecta un problema que el total semanal esconde: 13 series de pecho
+ * apelotonadas en un solo día no valen lo mismo que repartidas en dos.
+ */
+export const PER_SESSION_CEILING = 11
 
 /**
  * Regiones que agrupan varios músculos. Existen porque "el hombro" no es un
@@ -104,7 +133,23 @@ export interface RegionVolumeRow {
   indirectSets: number
   effectiveSets: number
   frequency: number
+  /**
+   * Suma de los rangos de sus músculos. Es imprescindible mostrarlo: sin una
+   * referencia al lado, un total de región (p. ej. 28 de hombro) se compara
+   * mentalmente con la regla de "10-20 series por músculo" y parece una
+   * barbaridad, cuando en realidad son TRES músculos sumados. El mismo error
+   * haría parecer excesivas las 44 de pierna, que son cinco músculos.
+   */
+  target: [number, number]
   members: MuscleVolumeRow[]
+}
+
+/** Un músculo que acumula demasiadas series en una sola sesión */
+export interface SessionOverload {
+  dayId: string
+  dayName: string
+  muscle: MuscleGroup
+  fractionalSets: number
 }
 
 function statusFor(
@@ -218,9 +263,45 @@ export function regionVolume(rows: MuscleVolumeRow[]): RegionVolumeRow[] {
       indirectSets: sum((r) => r.indirectSets),
       effectiveSets: sum((r) => r.effectiveSets),
       frequency: dayIds.size,
+      target: [sum((r) => r.target[0]), sum((r) => r.target[1])] as [number, number],
       members: found,
     }
   }).filter((r) => r.members.length > 0)
+}
+
+/**
+ * Músculos que superan el techo de series fraccionadas en una sola sesión.
+ * Es el segundo eje de calibración: el total semanal puede estar perfecto y
+ * aun así estar mal repartido dentro de la semana.
+ */
+export function perSessionOverload(week: number): SessionOverload[] {
+  const phase = phaseForWeek(week)
+  const out: SessionOverload[] = []
+
+  for (const day of WORKOUT_DAYS) {
+    const acc = new Map<MuscleGroup, number>()
+    for (const ex of day.exercises) {
+      if (ex.alternativeOf) continue
+      const { sets } = plannedSets(ex, week, phase)
+      acc.set(ex.muscle, (acc.get(ex.muscle) ?? 0) + sets)
+      for (const [m, factor] of Object.entries(ex.secondary ?? {})) {
+        const muscle = m as MuscleGroup
+        acc.set(muscle, (acc.get(muscle) ?? 0) + sets * (factor ?? 0))
+      }
+    }
+    for (const [muscle, sets] of acc) {
+      if (sets > PER_SESSION_CEILING) {
+        out.push({
+          dayId: day.id,
+          dayName: day.name,
+          muscle,
+          fractionalSets: Math.round(sets * 2) / 2,
+        })
+      }
+    }
+  }
+
+  return out.sort((a, b) => b.fractionalSets - a.fractionalSets)
 }
 
 /** Músculos que se quedan por debajo del mínimo recomendado esta semana */
