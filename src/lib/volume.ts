@@ -31,7 +31,11 @@ export const VOLUME_TARGETS: Record<MuscleGroup, [number, number]> = {
   Pecho: [8, 18],
   Espalda: [10, 20],
   'Hombro lateral': [8, 20],
-  'Hombro posterior': [4, 12],
+  // Mínimo 6, no 4: con 13 series de press de pecho más el press militar, el
+  // deltoides posterior necesita ese suelo para equilibrar el hombro (estética
+  // y salud articular). Con el mínimo en 4, las 4 series que había salían "ok"
+  // y escondían que era la cabeza peor atendida del programa.
+  'Hombro posterior': [6, 14],
   // Necesita poco trabajo directo: se lleva media serie de cada press del día
   // de empuje. Ese trabajo indirecto se cuenta, así que el rango es sobre el
   // volumen EFECTIVO (directo + indirecto), no solo sobre las series directas.
