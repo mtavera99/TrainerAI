@@ -14,7 +14,12 @@ import { useApp } from '../context/AppContext'
 import { WORKOUT_DAYS, phaseForWeek } from '../data/program'
 import { requiredRuns, runningWeek } from '../data/running'
 import { plannedSets } from '../lib/progression'
-import { weeklyVolume, type MuscleVolumeRow, type VolumeStatus } from '../lib/volume'
+import {
+  regionVolume,
+  weeklyVolume,
+  type MuscleVolumeRow,
+  type VolumeStatus,
+} from '../lib/volume'
 import { gainRateReport, nutritionTargets, type GainStatus } from '../lib/nutrition'
 import {
   PageHeader,
@@ -288,6 +293,7 @@ function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean
   const [showAll, setShowAll] = useState(false)
   const visible = showAll ? rows : rows.filter((r) => r.priority || r.status !== 'ok')
   const low = rows.filter((r) => r.status === 'bajo')
+  const regions = regionVolume(rows)
 
   return (
     <div className="card p-4">
@@ -303,6 +309,25 @@ function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean
         Volumen por músculo
       </SectionTitle>
 
+      {/* Totales por región: el hombro son 3 cabezas, no un músculo */}
+      <div className="grid grid-cols-3 gap-2 mb-4">
+        {regions.map((g) => (
+          <div key={g.label} className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-2.5">
+            <div className="text-[10px] font-bold uppercase tracking-wide text-slate-500 leading-tight">
+              {g.label}
+            </div>
+            <div className="mt-1 text-xl font-extrabold nums leading-none">
+              {g.effectiveSets}
+              <span className="text-[10px] font-bold text-slate-500"> series</span>
+            </div>
+            <div className="text-[10px] text-slate-500 nums mt-0.5">
+              {g.directSets} directas
+              {g.indirectSets > 0 && ` + ${g.indirectSets} ind.`} · {g.frequency}x
+            </div>
+          </div>
+        ))}
+      </div>
+
       <div className="space-y-2.5">
         {visible.map((r) => (
           <div key={r.muscle}>
@@ -316,7 +341,15 @@ function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean
               <span className="text-[11px] text-slate-500 nums">
                 {r.target[0]}-{r.target[1]}
               </span>
-              <span className="font-bold nums w-7 text-right">{r.plannedSets}</span>
+              <span className="font-bold nums w-12 text-right">
+                {r.effectiveSets}
+                {r.indirectSets > 0 && (
+                  <span className="text-[10px] font-medium text-slate-500">
+                    {' '}
+                    ({r.plannedSets}+{r.indirectSets})
+                  </span>
+                )}
+              </span>
               <span className="text-[11px] text-slate-400 nums w-6 text-right">{r.frequency}x</span>
               <span className={`chip w-11 justify-center ${STATUS_STYLES[r.status].cls}`}>
                 {STATUS_STYLES[r.status].label}
@@ -324,7 +357,7 @@ function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean
             </div>
             <div className="mt-1.5 ml-[19px]">
               <RangeBar
-                value={r.plannedSets}
+                value={r.effectiveSets}
                 min={r.target[0]}
                 max={r.target[1]}
                 tone={r.status}
@@ -342,9 +375,10 @@ function VolumeCard({ rows, deload }: { rows: MuscleVolumeRow[]; deload: boolean
       </button>
 
       <p className="text-[11px] text-slate-500 mt-2.5 leading-relaxed">
-        ⭐ prioridad del bloque. La barra gris es el rango recomendado de series directas por
-        semana y la de color lo que el programa planifica de verdad esta semana, escalado de
-        fase incluido.
+        ⭐ prioridad del bloque. El número grande es el volumen efectivo de la semana y, entre
+        paréntesis, las series <span className="text-slate-400">directas + indirectas</span>: un
+        press de pecho no entrena el deltoides anterior como un press militar, pero tampoco a
+        cero, así que cuenta media serie. La barra gris es el rango recomendado.
         {low.length > 0 && (
           <span className="text-rose-300">
             {' '}

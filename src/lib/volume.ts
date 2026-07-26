@@ -32,12 +32,34 @@ export const VOLUME_TARGETS: Record<MuscleGroup, [number, number]> = {
   Espalda: [10, 20],
   'Hombro lateral': [8, 20],
   'Hombro posterior': [4, 12],
-  Hombro: [3, 10],
+  // Necesita poco trabajo directo: se lleva media serie de cada press del día
+  // de empuje. Ese trabajo indirecto se cuenta, así que el rango es sobre el
+  // volumen EFECTIVO (directo + indirecto), no solo sobre las series directas.
+  'Hombro anterior': [4, 12],
   Bíceps: [6, 16],
   Tríceps: [6, 16],
   Antebrazo: [4, 12],
   Core: [4, 12],
 }
+
+/**
+ * Regiones que agrupan varios músculos. Existen porque "el hombro" no es un
+ * músculo: son tres cabezas que conviene programar por separado, pero al mirar
+ * la app uno quiere ver también el total. Sin esta agrupación la fila
+ * "Hombro anterior · 3 series" se lee como "solo hago 3 series de hombro",
+ * cuando entre las tres cabezas son 18.
+ */
+export const MUSCLE_REGIONS: { label: string; members: MuscleGroup[] }[] = [
+  {
+    label: 'Hombro (3 cabezas)',
+    members: ['Hombro anterior', 'Hombro lateral', 'Hombro posterior'],
+  },
+  {
+    label: 'Pierna',
+    members: ['Cuádriceps', 'Femoral', 'Glúteo', 'Aductores', 'Gemelos'],
+  },
+  { label: 'Brazo', members: ['Bíceps', 'Tríceps', 'Antebrazo'] },
+]
 
 /** Músculos que este bloque prioriza (se marcan en la app) */
 export const PRIORITY_MUSCLES: MuscleGroup[] = [
@@ -53,10 +75,16 @@ export type VolumeStatus = 'bajo' | 'ok' | 'alto'
 
 export interface MuscleVolumeRow {
   muscle: MuscleGroup
-  /** Series que el programa planifica esta semana */
+  /** Series DIRECTAS que el programa planifica esta semana */
   plannedSets: number
+  /** Series indirectas (compuestos que lo trabajan de segundas), redondeado a 0,5 */
+  indirectSets: number
+  /** Volumen efectivo: directas + indirectas. Es lo que se compara con el rango */
+  effectiveSets: number
   /** Días distintos de la semana en los que se entrena ese músculo */
   frequency: number
+  /** Días concretos (ids de entreno), para poder agregar por región */
+  dayIds: string[]
   /** Series efectivamente registradas esta semana */
   doneSets: number
   target: [number, number]
@@ -64,6 +92,15 @@ export interface MuscleVolumeRow {
   priority: boolean
   /** La semana analizada es de descarga (el volumen bajo es intencionado) */
   deload: boolean
+}
+
+export interface RegionVolumeRow {
+  label: string
+  directSets: number
+  indirectSets: number
+  effectiveSets: number
+  frequency: number
+  members: MuscleVolumeRow[]
 }
 
 function statusFor(
@@ -90,15 +127,28 @@ export function weeklyVolume(
 ): MuscleVolumeRow[] {
   const phase = phaseForWeek(week)
   const planned = new Map<MuscleGroup, number>()
+  const indirect = new Map<MuscleGroup, number>()
   const days = new Map<MuscleGroup, Set<string>>()
+
+  const addDay = (m: MuscleGroup, dayId: string) => {
+    if (!days.has(m)) days.set(m, new Set())
+    days.get(m)!.add(dayId)
+  }
 
   for (const day of WORKOUT_DAYS) {
     for (const ex of day.exercises) {
       if (ex.alternativeOf) continue // es la opción B, no suma
       const { sets } = plannedSets(ex, week, phase, sessions)
+
       planned.set(ex.muscle, (planned.get(ex.muscle) ?? 0) + sets)
-      if (!days.has(ex.muscle)) days.set(ex.muscle, new Set())
-      days.get(ex.muscle)!.add(day.id)
+      addDay(ex.muscle, day.id)
+
+      // Trabajo indirecto de los compuestos
+      for (const [m, factor] of Object.entries(ex.secondary ?? {})) {
+        const muscle = m as MuscleGroup
+        indirect.set(muscle, (indirect.get(muscle) ?? 0) + sets * (factor ?? 0))
+        addDay(muscle, day.id)
+      }
     }
   }
 
@@ -114,24 +164,59 @@ export function weeklyVolume(
     }
   }
 
-  return [...planned.entries()]
-    .map(([muscle, sets]) => {
+  const half = (n: number) => Math.round(n * 2) / 2
+
+  // Se recorren todos los músculos que aparecen como directos O como indirectos
+  const allMuscles = new Set<MuscleGroup>([...planned.keys(), ...indirect.keys()])
+
+  return [...allMuscles]
+    .map((muscle) => {
+      const direct = planned.get(muscle) ?? 0
+      const ind = half(indirect.get(muscle) ?? 0)
+      const effective = half(direct + ind)
       const target = VOLUME_TARGETS[muscle] ?? [4, 16]
+      const dayIds = [...(days.get(muscle) ?? [])]
       return {
         muscle,
-        plannedSets: sets,
-        frequency: days.get(muscle)?.size ?? 0,
+        plannedSets: direct,
+        indirectSets: ind,
+        effectiveSets: effective,
+        frequency: dayIds.length,
+        dayIds,
         doneSets: done.get(muscle) ?? 0,
         target,
-        status: statusFor(sets, target, !!phase.deload),
+        // El estado se juzga sobre el volumen EFECTIVO: si no, el deltoides
+        // anterior saldría "bajo" con 3 series cuando en realidad se lleva
+        // media serie de cada press del día de empuje.
+        status: statusFor(effective, target, !!phase.deload),
         priority: PRIORITY_MUSCLES.includes(muscle),
         deload: !!phase.deload,
       }
     })
     .sort((a, b) => {
       if (a.priority !== b.priority) return a.priority ? -1 : 1
-      return b.plannedSets - a.plannedSets
+      return b.effectiveSets - a.effectiveSets
     })
+}
+
+/** Totales por región (hombro completo, pierna completa, brazo completo) */
+export function regionVolume(rows: MuscleVolumeRow[]): RegionVolumeRow[] {
+  return MUSCLE_REGIONS.map(({ label, members }) => {
+    const found = members
+      .map((m) => rows.find((r) => r.muscle === m))
+      .filter((r): r is MuscleVolumeRow => !!r)
+    const dayIds = new Set(found.flatMap((r) => r.dayIds))
+    const sum = (pick: (r: MuscleVolumeRow) => number) =>
+      Math.round(found.reduce((a, r) => a + pick(r), 0) * 2) / 2
+    return {
+      label,
+      directSets: sum((r) => r.plannedSets),
+      indirectSets: sum((r) => r.indirectSets),
+      effectiveSets: sum((r) => r.effectiveSets),
+      frequency: dayIds.size,
+      members: found,
+    }
+  }).filter((r) => r.members.length > 0)
 }
 
 /** Músculos que se quedan por debajo del mínimo recomendado esta semana */
