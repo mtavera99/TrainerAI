@@ -35,9 +35,9 @@ lumbar → espalda → hombros → mantener pecho → integrar running. Juegas *
 
 | Día | Enfoque | Series |
 |-----|---------|--------|
-| Lunes | **Pierna A** · péndulo *o* hack, prensa unilateral, extensiones, curl femoral tumbado, gemelos de pie, colgado | 19-21 |
+| Lunes | **Pierna A** · péndulo *o* hack, prensa unilateral, extensiones, curl femoral tumbado, gemelos de pie, colgado | 20 → 26 |
 | Martes | Empuje · press ancho, inclinado Smith, aperturas, cruce, laterales, tríceps ×2, antebrazo | 26 |
-| Miércoles | **Pierna B** · curl femoral sentado, hip thrust, prensa profunda, aductores, gemelos sentado, crunch | 19-21 |
+| Miércoles | **Pierna B** · curl femoral sentado, hip thrust, prensa profunda, aductores, gemelos sentado, crunch | 21 → 27 |
 | Jueves | Espalda + Bíceps · jalón MAG, remo máquina, pull over, deltoide posterior, laterales, curl sentado, bayesian, antebrazo | 26 |
 | Viernes | Fútbol ⚽ | — |
 | Sábado | Hombro + Brazos · press militar Smith, laterales, pull over, predicador, copa, catana, antebrazo | 22 |
@@ -55,18 +55,19 @@ No están escritos a mano en ningún sitio: los calcula `src/lib/volume.ts` a pa
 ejercicios del programa y se muestran en la pestaña *Inicio*. Si algún día se toca un
 entrenamiento y un músculo se queda corto, se ve al instante.
 
-| Músculo | Frecuencia | Series (S1-3 → S4-10) |
+| Músculo | Frecuencia | Series (S1-3 → S4-6 → S7-9) |
 |---|---|---|
-| Cuádriceps ⭐ | 2x | 13 → 15 |
-| Femoral ⭐ | 2x | 8 → 10 |
-| Glúteo ⭐ | 1x (+ fútbol) | 4 |
-| Gemelos | 2x | 7 |
+| Cuádriceps ⭐ | 2x | 13 → 17 → 19 |
+| Femoral ⭐ | 2x | 8 → 10 → 11 |
+| Glúteo ⭐ | 1x (+ fútbol) | 4 → 5 |
+| Gemelos | 2x | 7 → 9 |
 | Espalda ⭐ | 2x | 13 |
 | Deltoide lateral ⭐ | 3x | 11 |
 | Antebrazo ⭐ | 3x | 9 |
 | Tríceps | 2x | 12 |
 | Bíceps | 2x | 9 |
-| Core | 2x | 4 |
+| Core | 2x | 6 |
+| Aductores | 1x | 3 |
 | Pecho | 1x | 13 |
 | Hombro (press) / posterior | 1x | 3 / 4 |
 
@@ -75,8 +76,16 @@ brazos los sientes bien, así que en este bloque solo se rediseñó la pierna. E
 como decisión, no como descuido.
 
 **Periodización**: el RIR baja *y* el volumen sube. Acumulación (S1-3, RIR 3) →
-Intensificación (S4-6, RIR 2, +1 serie en pierna) → Pico (S7-9, RIR 1) → Descarga (S10, RIR 4,
-~40% menos series).
+Intensificación (S4-6, RIR 2) → Pico (S7-9, RIR 1) → Descarga (S10, RIR 4, ~40% menos series).
+
+### El volumen extra es autorregulado
+
+La pierna escala fuerte (el cuádriceps pasa de 13 a 19 series semanales), pero **las series
+extra solo se aplican si el ejercicio sigue progresando**. Si un movimiento lleva 2 sesiones
+estancado, el escalado se retiene un escalón y la app te lo dice: añadir trabajo encima de un
+ejercicio que no avanza no produce más músculo, produce más fatiga. Tener tiempo de sobra en el
+gimnasio no significa que el músculo pueda recuperar volumen infinito, y menos con fútbol el
+viernes. Así el techo de volumen lo marcan tus datos y no un número elegido a dedo.
 
 ### Cómo decide la app tu carga de la semana
 

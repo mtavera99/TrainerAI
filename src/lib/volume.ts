@@ -95,7 +95,7 @@ export function weeklyVolume(
   for (const day of WORKOUT_DAYS) {
     for (const ex of day.exercises) {
       if (ex.alternativeOf) continue // es la opción B, no suma
-      const { sets } = plannedSets(ex, week, phase)
+      const { sets } = plannedSets(ex, week, phase, sessions)
       planned.set(ex.muscle, (planned.get(ex.muscle) ?? 0) + sets)
       if (!days.has(ex.muscle)) days.set(ex.muscle, new Set())
       days.get(ex.muscle)!.add(day.id)

@@ -35,11 +35,15 @@ import type {
 //    de pierna pero cada músculo se entrenaba una sola vez (cuádriceps lunes,
 //    isquios miércoles). Repartir el mismo volumen en 2 sesiones permite
 //    subir series totales sin que la sesión se haga interminable.
-//  · El volumen ESCALA dentro del bloque (campo `maxSets`): desde la semana 4
-//    se añade una serie a DOS ejercicios de cada día de pierna, no a todos, para
-//    que la sesión no se vaya de las manos. Cada día de pierna se queda en
-//    19 series (semanas 1-3) y 21 series (semanas 4-10), unos 70-85 min.
-//    Antes las series eran fijas las 10 semanas y solo bajaba el RIR.
+//  · El volumen ESCALA dentro del bloque (campo `maxSets`) en vez de ser fijo
+//    las 10 semanas con solo el RIR bajando. Santiago confirma que el tiempo
+//    por sesión no es limitante, así que la pierna sube fuerte: los días de
+//    pierna van de 20-21 series (S1-3) a 25-27 (S7-9), unos 100-110 min.
+//    IMPORTANTE: ese escalado es AUTORREGULADO (ver lib/progression.ts). Las
+//    series extra solo se aplican si el ejercicio sigue progresando; si se
+//    estanca, el volumen se retiene. Tener tiempo de sobra no significa que
+//    el músculo pueda recuperar volumen infinito, sobre todo con fútbol el
+//    viernes y dos salidas de running: el techo lo marcan sus datos.
 //  · El curl femoral SENTADO pasa a ser el principal de isquios (más series
 //    que el tumbado) porque con la cadera flexionada los isquios biarticulares
 //    trabajan a mayor longitud, y eso produjo más hipertrofia que el tumbado
@@ -230,6 +234,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         muscle: 'Cuádriceps',
         equipment: 'Máquina',
         sets: 3,
+        maxSets: 4,
         repMin: 10,
         repMax: 15,
         restSec: 120,
@@ -244,6 +249,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         muscle: 'Cuádriceps',
         equipment: 'Máquina',
         sets: 3,
+        maxSets: 5,
         repMin: 12,
         repMax: 15,
         restSec: 90,
@@ -271,6 +277,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         muscle: 'Gemelos',
         equipment: 'Máquina',
         sets: 4,
+        maxSets: 5,
         repMin: 8,
         repMax: 12,
         restSec: 90,
@@ -283,7 +290,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         name: 'Colgado a la barra, pies a la barra',
         muscle: 'Core',
         equipment: 'Peso corporal',
-        sets: 2,
+        sets: 3,
         repMin: 8,
         repMax: 15,
         restSec: 60,
@@ -531,7 +538,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         muscle: 'Femoral',
         equipment: 'Máquina',
         sets: 5,
-        maxSets: 6,
+        maxSets: 7,
         repMin: 8,
         repMax: 12,
         restSec: 150,
@@ -546,6 +553,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         muscle: 'Glúteo',
         equipment: 'Máquina',
         sets: 4,
+        maxSets: 5,
         repMin: 8,
         repMax: 12,
         restSec: 120,
@@ -560,7 +568,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         muscle: 'Cuádriceps',
         equipment: 'Máquina',
         sets: 3,
-        maxSets: 4,
+        maxSets: 5,
         repMin: 10,
         repMax: 15,
         restSec: 120,
@@ -573,7 +581,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         name: 'Aductores en máquina',
         muscle: 'Aductores',
         equipment: 'Máquina',
-        sets: 2,
+        sets: 3,
         repMin: 12,
         repMax: 20,
         restSec: 60,
@@ -586,6 +594,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         muscle: 'Gemelos',
         equipment: 'Máquina',
         sets: 3,
+        maxSets: 4,
         repMin: 12,
         repMax: 20,
         restSec: 60,
@@ -598,7 +607,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         name: 'Máquina de crunch',
         muscle: 'Core',
         equipment: 'Máquina',
-        sets: 2,
+        sets: 3,
         repMin: 12,
         repMax: 20,
         restSec: 45,

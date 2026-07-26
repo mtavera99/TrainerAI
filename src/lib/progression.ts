@@ -180,20 +180,37 @@ export function movementHistory(
  * Series planificadas para la semana. Los ejercicios con `maxSets` (las
  * piernas) ganan una serie cada bloque de 3 semanas hasta su techo; el resto
  * se mantiene fijo. En descarga se recorta ~40%.
+ *
+ * AUTORREGULACIÓN: el volumen extra solo se aplica si ese movimiento SIGUE
+ * PROGRESANDO. Añadir series encima de un ejercicio que ya está estancado no
+ * produce más músculo, produce más fatiga: si detectamos estancamiento, el
+ * escalado se retiene un escalón hasta que la carga vuelva a subir. Así el
+ * techo de volumen lo marcan tus datos y no un número que yo haya elegido.
  */
 export function plannedSets(
   ex: ExerciseTemplate,
   week: number,
   phase: PhaseConfig = phaseForWeek(week),
-): { sets: number; added: number } {
-  const ceiling = ex.maxSets ?? ex.sets
-  const bump = Math.max(0, Math.floor((week - 1) / 3))
-  const base = Math.min(ceiling, ex.sets + bump)
-
+  sessions?: SessionLog[],
+): { sets: number; added: number; held: boolean } {
   if (phase.deload) {
-    return { sets: Math.max(2, Math.round(ex.sets * 0.6)), added: 0 }
+    return { sets: Math.max(2, Math.round(ex.sets * 0.6)), added: 0, held: false }
   }
-  return { sets: base, added: base - ex.sets }
+
+  const ceiling = ex.maxSets ?? ex.sets
+  let bump = Math.max(0, Math.floor((week - 1) / 3))
+  let held = false
+
+  if (bump > 0 && ceiling > ex.sets && sessions && sessions.length > 0) {
+    const history = movementHistory(sessions, ex.id, week)
+    if (checkStagnation(history).stagnant) {
+      bump -= 1
+      held = true
+    }
+  }
+
+  const sets = Math.min(ceiling, ex.sets + bump)
+  return { sets, added: sets - ex.sets, held }
 }
 
 // ------------------------------------------------------------
@@ -266,7 +283,7 @@ export function prescribeExercise(
 ): ExercisePrescription {
   const phase = phaseForWeek(week)
   const targetRIR = phase.targetRIR
-  const { sets, added } = plannedSets(ex, week, phase)
+  const { sets, added, held } = plannedSets(ex, week, phase, sessions)
   const history = movementHistory(sessions, ex.id, week)
   const last = history[0]
 
@@ -351,7 +368,11 @@ export function prescribeExercise(
       alert: stag.regressing
         ? 'Has retrocedido respecto a la sesión anterior.'
         : `${stag.sessionsWithoutProgress} sesiones sin mejorar en este ejercicio.`,
-      rationale: `Llevas ${stag.sessionsWithoutProgress} sesiones sin avanzar aquí, así que insistir con ${last.topWeight} kg no va a funcionar. Baja a ${suggested} kg y busca ${ex.repMax} reps limpias con técnica perfecta y descanso completo (${ex.restSec}s): reconstruyes desde una carga que sí puedes dominar y en 2 semanas superas el tope anterior. Si vuelve a atascarse, revisa sueño, comida y si estás llegando de verdad a RIR ${targetRIR}.`,
+      rationale:
+        `Llevas ${stag.sessionsWithoutProgress} sesiones sin avanzar aquí, así que insistir con ${last.topWeight} kg no va a funcionar. Baja a ${suggested} kg y busca ${ex.repMax} reps limpias con técnica perfecta y descanso completo (${ex.restSec}s): reconstruyes desde una carga que sí puedes dominar y en 2 semanas superas el tope anterior. Si vuelve a atascarse, revisa sueño, comida y si estás llegando de verdad a RIR ${targetRIR}.` +
+        (held
+          ? ` También he retenido la serie extra de volumen que tocaba en esta fase: no tiene sentido añadir más trabajo encima de un ejercicio que no avanza. Volverá cuando la carga vuelva a subir.`
+          : ''),
     }
   }
 
