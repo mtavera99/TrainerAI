@@ -307,6 +307,8 @@ function VolumeCard({
   const visible = showAll ? rows : rows.filter((r) => r.priority || r.status !== 'ok')
   const low = rows.filter((r) => r.status === 'bajo')
   const regions = regionVolume(rows)
+  const doneTotal = rows.reduce((a, r) => a + r.doneSets, 0)
+  const plannedTotal = rows.reduce((a, r) => a + r.plannedSets, 0)
 
   return (
     <div className="card p-4">
@@ -344,6 +346,23 @@ function VolumeCard({
             </div>
           </div>
         ))}
+      </div>
+
+      {/* Lo que llevas HECHO esta semana. Sin esto la tarjeta solo mostraba el
+          plan, que dentro de una misma fase es idéntico las tres semanas, y
+          parecía que la app no recalculaba nada. */}
+      <div className="mb-4">
+        <div className="flex items-center justify-between text-xs mb-1.5">
+          <span className="text-slate-300 font-semibold">Hecho esta semana</span>
+          <span className="text-slate-400 nums">
+            {doneTotal} de {plannedTotal} series
+          </span>
+        </div>
+        <ProgressBar
+          pct={plannedTotal > 0 ? (doneTotal / plannedTotal) * 100 : 0}
+          height="h-1.5"
+          className="bg-gradient-to-r from-emerald-500 to-emerald-400"
+        />
       </div>
 
       {/* Segundo eje de calibración: reparto dentro de la semana */}
@@ -393,13 +412,22 @@ function VolumeCard({
                 {STATUS_STYLES[r.status].label}
               </span>
             </div>
-            <div className="mt-1.5 ml-[19px]">
-              <RangeBar
-                value={r.effectiveSets}
-                min={r.target[0]}
-                max={r.target[1]}
-                tone={r.status}
-              />
+            <div className="mt-1.5 ml-[19px] flex items-center gap-2">
+              <div className="flex-1">
+                <RangeBar
+                  value={r.effectiveSets}
+                  min={r.target[0]}
+                  max={r.target[1]}
+                  tone={r.status}
+                />
+              </div>
+              <span
+                className={`text-[10px] nums w-16 text-right ${
+                  r.doneSets >= r.plannedSets ? 'text-emerald-400' : 'text-slate-500'
+                }`}
+              >
+                {r.doneSets}/{r.plannedSets} hechas
+              </span>
             </div>
           </div>
         ))}
