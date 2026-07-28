@@ -106,6 +106,15 @@ export const PRIORITY_MUSCLES: MuscleGroup[] = [
 
 export type VolumeStatus = 'bajo' | 'ok' | 'alto'
 
+/**
+ * Cómo va el músculo DENTRO de la semana en curso:
+ *  · sin-empezar → aún no le toca, ningún día suyo entrenado
+ *  · al-dia      → llevas lo que tocaba en los días ya hechos
+ *  · corto       → los días ya hechos no cubrieron sus series
+ *  · completo    → ya has cubierto el objetivo semanal
+ */
+export type TrackStatus = 'sin-empezar' | 'al-dia' | 'corto' | 'completo'
+
 export interface MuscleVolumeRow {
   muscle: MuscleGroup
   /** Series DIRECTAS que el programa planifica esta semana */
@@ -118,8 +127,17 @@ export interface MuscleVolumeRow {
   frequency: number
   /** Días concretos (ids de entreno), para poder agregar por región */
   dayIds: string[]
-  /** Series efectivamente registradas esta semana */
+  /** Series directas efectivamente registradas esta semana */
   doneSets: number
+  /**
+   * Series que YA deberías llevar: las planificadas en los días que ya has
+   * marcado como completados. Es la clave para distinguir "me falta porque
+   * todavía no me toca" de "me quedé corto en el entreno que ya hice".
+   */
+  dueSets: number
+  /** Series que quedan en días que aún no has entrenado */
+  pendingSets: number
+  trackStatus: TrackStatus
   target: [number, number]
   status: VolumeStatus
   priority: boolean
@@ -215,6 +233,20 @@ export function weeklyVolume(
 
   const half = (n: number) => Math.round(n * 2) / 2
 
+  // Días de esta semana que ya has completado, para saber qué series YA tocaban
+  const completedDays = new Set(
+    sessions.filter((s) => s.week === week && s.completed).map((s) => s.dayId),
+  )
+  const due = new Map<MuscleGroup, number>()
+  for (const day of WORKOUT_DAYS) {
+    if (!completedDays.has(day.id)) continue
+    for (const ex of day.exercises) {
+      if (ex.alternativeOf) continue
+      const { sets } = plannedSets(ex, week, phase, sessions)
+      due.set(ex.muscle, (due.get(ex.muscle) ?? 0) + sets)
+    }
+  }
+
   // Se recorren todos los músculos que aparecen como directos O como indirectos
   const allMuscles = new Set<MuscleGroup>([...planned.keys(), ...indirect.keys()])
 
@@ -225,6 +257,15 @@ export function weeklyVolume(
       const effective = half(direct + ind)
       const target = VOLUME_TARGETS[muscle] ?? [4, 16]
       const dayIds = [...(days.get(muscle) ?? [])]
+      const doneSets = done.get(muscle) ?? 0
+      const dueSets = due.get(muscle) ?? 0
+
+      let trackStatus: TrackStatus
+      if (direct > 0 && doneSets >= direct) trackStatus = 'completo'
+      else if (dueSets === 0 && doneSets === 0) trackStatus = 'sin-empezar'
+      else if (doneSets < dueSets) trackStatus = 'corto'
+      else trackStatus = 'al-dia'
+
       return {
         muscle,
         plannedSets: direct,
@@ -232,7 +273,10 @@ export function weeklyVolume(
         effectiveSets: effective,
         frequency: dayIds.length,
         dayIds,
-        doneSets: done.get(muscle) ?? 0,
+        doneSets,
+        dueSets,
+        pendingSets: Math.max(0, direct - dueSets),
+        trackStatus,
         target,
         // El estado se juzga sobre el volumen EFECTIVO: si no, el deltoides
         // anterior saldría "bajo" con 3 series cuando en realidad se lleva
