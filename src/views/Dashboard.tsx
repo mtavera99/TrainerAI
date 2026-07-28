@@ -22,6 +22,7 @@ import {
   weeklyVolume,
   type MuscleVolumeRow,
   type SessionOverload,
+  type TrackStatus,
   type VolumeStatus,
 } from '../lib/volume'
 import { gainRateReport, nutritionTargets, type GainStatus } from '../lib/nutrition'
@@ -30,7 +31,6 @@ import {
   PhaseBadge,
   ProgressBar,
   ProgressRing,
-  RangeBar,
   SectionTitle,
   StatCard,
 } from '../components/ui'
@@ -289,6 +289,36 @@ const STATUS_STYLES: Record<VolumeStatus, { cls: string; label: string }> = {
   alto: { cls: 'bg-amber-500/15 text-amber-300', label: 'alto' },
 }
 
+const TRACK_STYLES: Record<
+  TrackStatus,
+  { cls: string; label: string; num: string; bar: string }
+> = {
+  'sin-empezar': {
+    cls: 'bg-slate-800 text-slate-400',
+    label: 'sin empezar',
+    num: 'text-slate-500',
+    bar: 'bg-slate-600',
+  },
+  'al-dia': {
+    cls: 'bg-sky-500/15 text-sky-300',
+    label: 'al día',
+    num: 'text-sky-300',
+    bar: 'bg-sky-400',
+  },
+  corto: {
+    cls: 'bg-amber-500/15 text-amber-300',
+    label: 'vas corto',
+    num: 'text-amber-300',
+    bar: 'bg-amber-400',
+  },
+  completo: {
+    cls: 'bg-emerald-500/15 text-emerald-300',
+    label: 'completo',
+    num: 'text-emerald-300',
+    bar: 'bg-emerald-400',
+  },
+}
+
 /**
  * Series y frecuencia reales por músculo, calculadas desde el programa.
  * Es la tarjeta que impide que la app vuelva a "prometer" una frecuencia que
@@ -304,7 +334,9 @@ function VolumeCard({
   overloads: SessionOverload[]
 }) {
   const [showAll, setShowAll] = useState(false)
-  const visible = showAll ? rows : rows.filter((r) => r.priority || r.status !== 'ok')
+  const visible = showAll
+    ? rows
+    : rows.filter((r) => r.priority || r.status !== 'ok' || r.trackStatus === 'corto')
   const low = rows.filter((r) => r.status === 'bajo')
   const regions = regionVolume(rows)
   const doneTotal = rows.reduce((a, r) => a + r.doneSets, 0)
@@ -317,11 +349,11 @@ function VolumeCard({
           deload ? (
             <span className="chip bg-emerald-500/15 text-emerald-300">descarga</span>
           ) : (
-            <span className="text-[11px] text-slate-500">series · frecuencia</span>
+            <span className="text-[11px] text-slate-500">hechas / objetivo</span>
           )
         }
       >
-        Volumen por músculo
+        Volumen de la semana
       </SectionTitle>
 
       {/* Totales por región. El rango va SIEMPRE al lado: sin él, un total de
@@ -386,51 +418,47 @@ function VolumeCard({
       )}
 
       <div className="space-y-2.5">
-        {visible.map((r) => (
-          <div key={r.muscle}>
-            <div className="flex items-center gap-2 text-sm">
-              {r.priority ? (
-                <Star size={11} className="text-amber-400 shrink-0" fill="currentColor" />
-              ) : (
-                <span className="w-[11px] shrink-0" />
-              )}
-              <span className="flex-1 min-w-0 truncate text-slate-200">{r.muscle}</span>
-              <span className="text-[11px] text-slate-500 nums">
-                {r.target[0]}-{r.target[1]}
-              </span>
-              <span className="font-bold nums w-12 text-right">
-                {r.effectiveSets}
-                {r.indirectSets > 0 && (
-                  <span className="text-[10px] font-medium text-slate-500">
-                    {' '}
-                    ({r.plannedSets}+{r.indirectSets})
+        {visible.map((r) => {
+          const t = TRACK_STYLES[r.trackStatus]
+          const pct = r.plannedSets > 0 ? (r.doneSets / r.plannedSets) * 100 : 0
+          return (
+            <div key={r.muscle}>
+              <div className="flex items-center gap-2 text-sm">
+                {r.priority ? (
+                  <Star size={11} className="text-amber-400 shrink-0" fill="currentColor" />
+                ) : (
+                  <span className="w-[11px] shrink-0" />
+                )}
+                <span className="flex-1 min-w-0 truncate text-slate-200">{r.muscle}</span>
+                {/* Lo que de verdad quieres saber: cuántas llevas de las de esta semana */}
+                <span className="font-bold nums">
+                  <span className={t.num}>{r.doneSets}</span>
+                  <span className="text-slate-500 font-semibold"> / {r.plannedSets}</span>
+                </span>
+                <span className={`chip w-[74px] justify-center ${t.cls}`}>{t.label}</span>
+                {/* El aviso de calibración solo aparece si algo se sale del rango */}
+                {r.status !== 'ok' && (
+                  <span className={`chip ${STATUS_STYLES[r.status].cls}`}>
+                    {STATUS_STYLES[r.status].label}
                   </span>
                 )}
-              </span>
-              <span className="text-[11px] text-slate-400 nums w-6 text-right">{r.frequency}x</span>
-              <span className={`chip w-11 justify-center ${STATUS_STYLES[r.status].cls}`}>
-                {STATUS_STYLES[r.status].label}
-              </span>
-            </div>
-            <div className="mt-1.5 ml-[19px] flex items-center gap-2">
-              <div className="flex-1">
-                <RangeBar
-                  value={r.effectiveSets}
-                  min={r.target[0]}
-                  max={r.target[1]}
-                  tone={r.status}
-                />
               </div>
-              <span
-                className={`text-[10px] nums w-16 text-right ${
-                  r.doneSets >= r.plannedSets ? 'text-emerald-400' : 'text-slate-500'
-                }`}
-              >
-                {r.doneSets}/{r.plannedSets} hechas
-              </span>
+
+              <div className="mt-1.5 ml-[19px] flex items-center gap-2">
+                <div className="flex-1">
+                  <ProgressBar pct={pct} height="h-1.5" className={t.bar} />
+                </div>
+                <span className="text-[10px] text-slate-500 nums w-[104px] text-right">
+                  {r.trackStatus === 'completo'
+                    ? `${r.effectiveSets} efec · ${r.frequency}x`
+                    : r.trackStatus === 'corto'
+                      ? `te faltan ${Math.round((r.dueSets - r.doneSets) * 10) / 10} de hoy`
+                      : `quedan ${Math.round((r.plannedSets - r.doneSets) * 10) / 10} · ${r.frequency}x`}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          )
+        })}
       </div>
 
       <button
@@ -441,12 +469,12 @@ function VolumeCard({
       </button>
 
       <p className="text-[11px] text-slate-500 mt-2.5 leading-relaxed">
-        ⭐ prioridad del bloque. El número grande es el volumen efectivo de la semana y, entre
-        paréntesis, las series <span className="text-slate-400">directas + indirectas</span>: un
-        press de pecho no entrena el deltoides anterior como un press militar, pero tampoco a
-        cero, así que cuenta media serie. Los rangos son{' '}
-        <span className="text-slate-400">por músculo</span>, nunca por región, y están calibrados
-        para nivel intermedio: 10-20 en los prioritarios y 8-16 en los de mantenimiento.
+        ⭐ prioridad del bloque. El número es{' '}
+        <span className="text-slate-400">series hechas / objetivo de la semana</span>.{' '}
+        <span className="text-sky-300">Al día</span> = llevas lo que tocaba en los entrenos que ya
+        has hecho. <span className="text-amber-300">Vas corto</span> = un entreno que ya hiciste se
+        quedó sin cubrir sus series. <span className="text-slate-400">Sin empezar</span> = todavía
+        no te toca, no es un retraso.
         {low.length > 0 && (
           <span className="text-rose-300">
             {' '}
