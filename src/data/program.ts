@@ -1,4 +1,5 @@
 import type {
+  ExerciseSwap,
   ExerciseTemplate,
   WorkoutDayTemplate,
   PhaseConfig,
@@ -187,6 +188,194 @@ export function phaseForWeek(week: number): PhaseConfig {
   )
 }
 
+// ============================================================
+// VARIANTES (sustituciones)
+// ------------------------------------------------------------
+// Un programa escrito con máquinas concretas choca con la realidad: la máquina
+// está ocupada, o simplemente hay una versión del ejercicio que se siente
+// mejor. Antes no había forma de registrarlo y había que anotarlo como si se
+// hubiera hecho el de la plantilla, lo que metía kilos no comparables en el
+// mismo historial (20 kg de barra recta no son 20 kg de polea).
+//
+// Cada variante entrena el MISMO músculo con el MISMO número de series, así
+// que el volumen semanal no cambia. Lo que cambia es el historial de cargas:
+// cada variante progresa con sus propios kilos y su propio escalón de carga.
+//
+// Además de estas, la app siempre deja escribir una variante libre, así que
+// nunca te quedas sin forma de registrar lo que hiciste de verdad.
+// ============================================================
+
+/** Antebrazo: la barra recta es la que Santiago usa la mayoría de las veces */
+const SWAPS_ANTEBRAZO: ExerciseSwap[] = [
+  {
+    id: 'barra-recta',
+    name: 'Curl de muñeca con barra recta',
+    equipment: 'Barra',
+    loadStep: 2.5,
+    note: 'Antebrazos apoyados en el banco o en los muslos, muñecas por fuera del borde. Baja hasta abrir la mano y cierra fuerte al subir. Estimula lo mismo que la polea; si la sientes mejor, es mejor ejercicio para ti.',
+  },
+  {
+    id: 'mancuernas',
+    name: 'Curl de muñeca con mancuernas',
+    equipment: 'Mancuerna',
+    loadStep: 2,
+    note: 'Una mano cada vez o las dos a la vez. Permite corregir si un antebrazo va por detrás del otro.',
+  },
+  {
+    id: 'inverso',
+    name: 'Curl inverso / extensión de muñeca',
+    equipment: 'Barra',
+    loadStep: 1.25,
+    note: 'Palmas hacia abajo: trabaja los EXTENSORES, no los flexores. Úsalo si notas desequilibrio o molestias de codo. Pesos muy bajos, el rango manda.',
+  },
+]
+
+/** Elevaciones laterales: las tres dosis semanales admiten cambio de material */
+const SWAPS_LATERAL: ExerciseSwap[] = [
+  {
+    id: 'mancuernas',
+    name: 'Elevaciones laterales con mancuernas',
+    equipment: 'Mancuerna',
+    loadStep: 2,
+    note: 'Más libertad de recorrido y más exigencia de técnica: sin impulso de cadera, lidera con el codo y para justo a la altura del hombro.',
+  },
+  {
+    id: 'polea-unilateral',
+    name: 'Elevación lateral en polea (a un brazo)',
+    equipment: 'Polea',
+    loadStep: 1.25,
+    note: 'La polea mantiene tensión también abajo, donde la mancuerna la pierde. Un brazo cada vez, agarrando por delante del cuerpo.',
+  },
+]
+
+const SWAPS_CURL_BICEPS: ExerciseSwap[] = [
+  {
+    id: 'mancuernas',
+    name: 'Curl de bíceps con mancuernas',
+    equipment: 'Mancuerna',
+    loadStep: 2,
+    note: 'Sentado en banco, sin balanceo. Puedes alternar brazos.',
+  },
+  {
+    id: 'barra-z',
+    name: 'Curl con barra Z',
+    equipment: 'Barra',
+    loadStep: 2.5,
+    note: 'Agarre semisupino: más cómodo de muñeca que la barra recta.',
+  },
+]
+
+const SWAPS_TRICEPS_POLEA: ExerciseSwap[] = [
+  {
+    id: 'barra-z-tumbado',
+    name: 'Extensión con barra Z tumbado',
+    equipment: 'Barra',
+    loadStep: 2.5,
+    note: 'Baja hacia la frente con los codos quietos. Estira bien la cabeza larga arriba.',
+  },
+  {
+    id: 'mancuerna-una-mano',
+    name: 'Extensión con mancuerna a una mano',
+    equipment: 'Mancuerna',
+    loadStep: 2,
+    note: 'Sobre la cabeza, un brazo cada vez. Útil si la polea está ocupada.',
+  },
+]
+
+const SWAPS_COPA: ExerciseSwap[] = [
+  {
+    id: 'polea-cuerda',
+    name: 'Extensión sobre la cabeza en polea (cuerda)',
+    equipment: 'Polea',
+    loadStep: 1.25,
+    note: 'De espaldas a la polea, cuerda por detrás de la nuca. Mantiene tensión en el estiramiento mejor que la mancuerna.',
+  },
+  {
+    id: 'barra-z-copa',
+    name: 'Extensión sobre la cabeza con barra Z',
+    equipment: 'Barra',
+    loadStep: 2.5,
+    note: 'Sentado con respaldo. Codos apuntando al frente y quietos.',
+  },
+]
+
+const SWAPS_PRESS_INCLINADO: ExerciseSwap[] = [
+  {
+    id: 'mancuernas',
+    name: 'Press inclinado con mancuernas',
+    equipment: 'Mancuerna',
+    loadStep: 2,
+    note: 'Más rango y más estiramiento abajo que el Smith, pero menos estable: baja el peso respecto a la barra y no compares los kilos.',
+  },
+]
+
+const SWAPS_APERTURAS: ExerciseSwap[] = [
+  {
+    id: 'mancuernas-inclinado',
+    name: 'Aperturas con mancuernas en banco inclinado',
+    equipment: 'Mancuerna',
+    loadStep: 2,
+    note: 'Codos ligeramente flexionados y fijos. Abre hasta sentir el estiramiento del pectoral, sin forzar el hombro.',
+  },
+]
+
+const SWAPS_JALON: ExerciseSwap[] = [
+  {
+    id: 'prono-ancho',
+    name: 'Jalón al pecho con agarre prono ancho',
+    equipment: 'Polea',
+    loadStep: 5,
+    note: 'Mismo movimiento, más énfasis en amplitud. Los kilos no coinciden con el MAG, así que lleva su propio historial.',
+  },
+  {
+    id: 'neutro',
+    name: 'Jalón con agarre neutro (paralelo)',
+    equipment: 'Polea',
+    loadStep: 5,
+    note: 'Más recorrido y menos tensión de hombro. Buen recambio si el MAG está ocupado.',
+  },
+]
+
+const SWAPS_REMO: ExerciseSwap[] = [
+  {
+    id: 'polea-sentado',
+    name: 'Remo en polea sentado',
+    equipment: 'Polea',
+    loadStep: 5,
+    note: 'Sin apoyo de pecho: mantén el torso quieto y no tires con la lumbar. Si notas el lado derecho, vuelve a la máquina.',
+  },
+]
+
+const SWAPS_PULLOVER: ExerciseSwap[] = [
+  {
+    id: 'polea-cuerda',
+    name: 'Pull over en polea alta (cuerda)',
+    equipment: 'Polea',
+    loadStep: 2.5,
+    note: 'De pie, brazos casi rectos, empuja hacia las caderas sintiendo el dorsal. Mismo trabajo que la máquina.',
+  },
+]
+
+const SWAPS_GEMELOS_PIE: ExerciseSwap[] = [
+  {
+    id: 'en-prensa',
+    name: 'Gemelos en prensa',
+    equipment: 'Máquina',
+    loadStep: 5,
+    note: 'Rodilla casi extendida, así que sigue siendo gastrocnemio. Estira 2 s abajo.',
+  },
+]
+
+const SWAPS_EXTENSIONES: ExerciseSwap[] = [
+  {
+    id: 'unilateral',
+    name: 'Extensiones de cuádriceps a una pierna',
+    equipment: 'Máquina',
+    loadStep: 2.5,
+    note: 'Una pierna cada vez para corregir la asimetría del lado derecho. Registra el peso por pierna.',
+  },
+]
+
 // ------------------------------------------------------------
 // Días de entrenamiento
 // ------------------------------------------------------------
@@ -254,6 +443,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'extensiones',
+        swaps: SWAPS_EXTENSIONES,
         name: 'Extensiones de cuádriceps',
         muscle: 'Cuádriceps',
         equipment: 'Máquina',
@@ -282,6 +472,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'gemelos-pie',
+        swaps: SWAPS_GEMELOS_PIE,
         name: 'Gemelos de pie (pantorrillas)',
         muscle: 'Gemelos',
         equipment: 'Máquina',
@@ -332,6 +523,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'press-inclinado-smith',
+        swaps: SWAPS_PRESS_INCLINADO,
         name: 'Press inclinado en Smith',
         muscle: 'Pecho',
         equipment: 'Smith',
@@ -346,6 +538,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'aperturas-maquina-inclinada',
+        swaps: SWAPS_APERTURAS,
         name: 'Aperturas en máquina inclinada',
         muscle: 'Pecho',
         equipment: 'Máquina',
@@ -372,6 +565,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'lateral-maquina-d2',
         movementId: 'lateral-maquina',
+        swaps: SWAPS_LATERAL,
         name: 'Elevaciones laterales en máquina (de pie)',
         muscle: 'Hombro lateral',
         equipment: 'Máquina',
@@ -385,6 +579,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'triceps-45-cbum',
+        swaps: SWAPS_TRICEPS_POLEA,
         name: 'Extensión de tríceps 45° (polea, estilo CBUM)',
         muscle: 'Tríceps',
         equipment: 'Polea',
@@ -411,6 +606,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'antebrazo-polea-d2',
         movementId: 'antebrazo-polea',
+        swaps: SWAPS_ANTEBRAZO,
         name: 'Curl de antebrazo en polea',
         muscle: 'Antebrazo',
         equipment: 'Polea',
@@ -433,6 +629,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
     exercises: [
       {
         id: 'jalon-mag',
+        swaps: SWAPS_JALON,
         name: 'Jalón al pecho (agarre MAG)',
         muscle: 'Espalda',
         equipment: 'Polea',
@@ -447,6 +644,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'remo-maquina',
+        swaps: SWAPS_REMO,
         name: 'Máquina de remo',
         muscle: 'Espalda',
         equipment: 'Máquina',
@@ -462,6 +660,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'pullover-maquina-d3',
         movementId: 'pullover-maquina',
+        swaps: SWAPS_PULLOVER,
         name: 'Máquina de pull over',
         muscle: 'Espalda',
         equipment: 'Máquina',
@@ -487,6 +686,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'lateral-maquina-d3',
         movementId: 'lateral-maquina',
+        swaps: SWAPS_LATERAL,
         name: 'Elevaciones laterales en máquina (de pie)',
         muscle: 'Hombro lateral',
         equipment: 'Máquina',
@@ -500,6 +700,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'curl-bicep-sentado',
+        swaps: SWAPS_CURL_BICEPS,
         name: 'Curl de bíceps sentado en máquina',
         muscle: 'Bíceps',
         equipment: 'Máquina',
@@ -524,6 +725,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'antebrazo-polea-d3',
         movementId: 'antebrazo-polea',
+        swaps: SWAPS_ANTEBRAZO,
         name: 'Curl de antebrazo en polea',
         muscle: 'Antebrazo',
         equipment: 'Polea',
@@ -658,6 +860,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'lateral-maquina-d5',
         movementId: 'lateral-maquina',
+        swaps: SWAPS_LATERAL,
         name: 'Elevaciones laterales en máquina (de pie)',
         muscle: 'Hombro lateral',
         equipment: 'Máquina',
@@ -701,6 +904,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'pullover-maquina-d5',
         movementId: 'pullover-maquina',
+        swaps: SWAPS_PULLOVER,
         name: 'Máquina de pull over (2ª dosis amplitud)',
         muscle: 'Espalda',
         equipment: 'Máquina',
@@ -713,6 +917,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'curl-predicador',
+        swaps: SWAPS_CURL_BICEPS,
         name: 'Curl predicador',
         muscle: 'Bíceps',
         equipment: 'Máquina',
@@ -725,6 +930,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       },
       {
         id: 'triceps-copa',
+        swaps: SWAPS_COPA,
         name: 'Extensión de tríceps sobre la cabeza ("copa")',
         muscle: 'Tríceps',
         equipment: 'Mancuerna',
@@ -750,6 +956,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
       {
         id: 'antebrazo-polea-d5',
         movementId: 'antebrazo-polea',
+        swaps: SWAPS_ANTEBRAZO,
         name: 'Curl de antebrazo en polea',
         muscle: 'Antebrazo',
         equipment: 'Polea',
@@ -763,6 +970,11 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
     ],
   },
 ]
+
+/** Variantes catalogadas de un ejercicio (además de la libre, siempre disponible) */
+export function swapsFor(exerciseId: string): ExerciseSwap[] {
+  return findExercise(exerciseId)?.swaps ?? []
+}
 
 export function findExercise(exerciseId: string) {
   for (const day of WORKOUT_DAYS) {

@@ -29,6 +29,40 @@ export type Equipment =
 /** Énfasis de longitud muscular del ejercicio (dónde genera más tensión) */
 export type LengthEmphasis = 'estirado' | 'medio' | 'acortado'
 
+/**
+ * Variante aceptada de un ejercicio: el mismo hueco del entreno hecho con
+ * otro material. Existe porque el programa no puede predecir qué máquina está
+ * libre ni cuál se siente mejor: el curl de antebrazo con barra recta entrena
+ * exactamente lo mismo que en polea, y obligar a registrarlo como polea
+ * contamina el historial de cargas con kilos que no son comparables.
+ *
+ * Cada variante lleva su PROPIO historial de progresión, porque 20 kg de barra
+ * recta y 20 kg de polea no son lo mismo. Lo que NO cambia es el músculo ni
+ * las series: el volumen semanal se cuenta igual.
+ */
+export interface ExerciseSwap {
+  id: string
+  name: string
+  equipment: Equipment
+  /** Incremento mínimo de carga de ESTE material (una barra no sube de 1,25) */
+  loadStep: number
+  note?: string
+}
+
+/**
+ * Variante realmente realizada, tal y como se guarda en la sesión. Se guarda
+ * el nombre completo, no solo el id, para que el historial siga siendo legible
+ * aunque más adelante se retire esa variante del catálogo.
+ */
+export interface LoggedSwap {
+  id: string
+  name: string
+  equipment?: Equipment
+  loadStep?: number
+  /** Variante escrita a mano por el usuario (no está en el catálogo) */
+  custom?: boolean
+}
+
 /** Plantilla de un ejercicio dentro del programa base */
 export interface ExerciseTemplate {
   id: string
@@ -71,6 +105,12 @@ export interface ExerciseTemplate {
   alternativeOf?: string
   /** Etiqueta de la opción cuando forma parte de un par A/B */
   optionLabel?: string
+  /**
+   * Variantes con las que se puede sustituir este ejercicio sin cambiar el
+   * estímulo. Además de estas, la app siempre permite escribir una variante
+   * libre: nunca te puedes quedar sin forma de registrar lo que hiciste.
+   */
+  swaps?: ExerciseSwap[]
   /** Dónde genera más tensión (para explicar el porqué de la selección) */
   emphasis?: LengthEmphasis
   /**
@@ -100,6 +140,12 @@ export type ProgressionAction =
   | 'primera-vez'
   | 'subir-peso'
   | 'sumar-reps'
+  /**
+   * Alguna serie se cayó por debajo del mínimo del rango: la carga es correcta
+   * para las primeras series pero demasiada para completarlas todas. Toca
+   * igualar las series flojas antes de añadir kilos.
+   */
+  | 'consolidar'
   | 'ajustar-por-rir'
   | 'romper-estancamiento'
   | 'descarga'
@@ -126,8 +172,20 @@ export interface ExercisePrescription {
   alert?: string
   /** Series añadidas respecto a la base por el escalado de volumen */
   addedSets?: number
-  /** Peso y reps de referencia de la última vez que hiciste el movimiento */
-  lastTop?: { weight: number; reps: number; rir: number; week: number }
+  /**
+   * Referencia de la última vez que hiciste ESTE ejercicio EN ESTE DÍA con
+   * esta misma variante. `reps` es la serie más floja y `repsBest` la mejor:
+   * mostrar solo la más floja hacía parecer que la app te subestimaba.
+   */
+  lastTop?: {
+    weight: number
+    reps: number
+    repsBest: number
+    rir: number
+    week: number
+  }
+  /** Nombre de la variante para la que se ha calculado (si no es la de plantilla) */
+  variantName?: string
 }
 
 // ---------- Registro de sesiones ----------
@@ -142,6 +200,12 @@ export interface LoggedSet {
 export interface LoggedExercise {
   exerciseId: string
   sets: LoggedSet[]
+  /**
+   * Variante con la que se hizo de verdad. Ausente = el ejercicio tal cual
+   * viene en la plantilla. Las sesiones guardadas antes de existir este campo
+   * se leen como "la de plantilla", que es exactamente lo que eran.
+   */
+  swap?: LoggedSwap
 }
 
 export interface SessionLog {

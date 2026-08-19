@@ -43,31 +43,47 @@ export default function Historial() {
       .map(([week, vol]) => ({ semana: `S${week}`, volumen: Math.round(vol) }))
   }, [state.sessions])
 
-  // Todos los ejercicios (para el selector)
-  const allExercises = useMemo(() => {
-    const seen = new Set<string>()
-    const list: { id: string; name: string }[] = []
+  /**
+   * Opciones del selector de fuerza.
+   *
+   * Una entrada por HUECO y VARIANTE, no por nombre de ejercicio. Dos motivos:
+   *  · Las laterales aparecen en tres días con el mismo nombre; antes salían
+   *    tres opciones idénticas en el desplegable y no se sabía cuál era cuál.
+   *  · Si un día sustituiste la polea por barra recta, esos kilos no son
+   *    comparables. Meterlos en la misma línea del gráfico dibujaría una
+   *    caída de fuerza que no ha existido.
+   */
+  const series = useMemo(() => {
+    const out = new Map<string, string>()
     for (const d of WORKOUT_DAYS) {
+      const dayLabel = d.name.split('·')[0].trim()
       for (const e of d.exercises) {
-        if (!seen.has(e.id)) {
-          seen.add(e.id)
-          list.push({ id: e.id, name: e.name })
-        }
+        out.set(`${e.id}::`, `${e.name} · ${dayLabel}`)
       }
     }
-    return list
-  }, [])
+    for (const s of state.sessions) {
+      const dayLabel = findDay(s.dayId)?.name.split('·')[0].trim() ?? 'Otro'
+      for (const le of s.exercises) {
+        if (!le.swap) continue
+        out.set(`${le.exerciseId}::${le.swap.id}`, `${le.swap.name} · ${dayLabel}`)
+      }
+    }
+    return [...out.entries()].map(([key, label]) => ({ key, label }))
+  }, [state.sessions])
 
-  const [exId, setExId] = useState(allExercises[0]?.id ?? '')
+  const [seriesKey, setSeriesKey] = useState(series[0]?.key ?? '')
 
-  // Progresión del ejercicio seleccionado (1RM estimado y peso top)
+  // Progresión del hueco+variante seleccionados (1RM estimado y peso top)
   const exData = useMemo(() => {
+    const [exId, swapId = ''] = seriesKey.split('::')
     const points: { date: string; e1rm: number; top: number }[] = []
     const sessions = [...state.sessions]
       .filter((s) => s.completed)
       .sort((a, b) => a.week - b.week || a.date.localeCompare(b.date))
     for (const s of sessions) {
-      const le = s.exercises.find((e) => e.exerciseId === exId)
+      const le = s.exercises.find(
+        (e) => e.exerciseId === exId && (e.swap?.id ?? '') === swapId,
+      )
       if (!le) continue
       const working = le.sets.filter((st) => st.done && st.weight > 0 && st.reps > 0)
       if (working.length === 0) continue
@@ -76,7 +92,7 @@ export default function Historial() {
       points.push({ date: `S${s.week}`, e1rm: Math.round(best), top })
     }
     return points
-  }, [state.sessions, exId])
+  }, [state.sessions, seriesKey])
 
   const completedSessions = [...state.sessions]
     .filter((s) => s.completed)
@@ -142,13 +158,13 @@ export default function Historial() {
       <div className="card p-4">
         <SectionTitle>Fuerza por ejercicio</SectionTitle>
         <select
-          value={exId}
-          onChange={(e) => setExId(e.target.value)}
+          value={seriesKey}
+          onChange={(e) => setSeriesKey(e.target.value)}
           className="input mb-3"
         >
-          {allExercises.map((e) => (
-            <option key={e.id} value={e.id}>
-              {e.name}
+          {series.map((s) => (
+            <option key={s.key} value={s.key}>
+              {s.label}
             </option>
           ))}
         </select>
@@ -181,6 +197,11 @@ export default function Historial() {
               const day = findDay(s.dayId)
               const setsDone = s.exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0)
               const vol = Math.round(s.exercises.reduce((a, e) => a + exerciseVolume(e), 0))
+              // Qué ejercicios sustituiste ese día: sin esto, al mirar atrás no
+              // hay forma de saber que el antebrazo se hizo con barra recta.
+              const swapped = s.exercises.filter(
+                (e) => e.swap && e.sets.some((st) => st.done),
+              )
               return (
                 <div key={s.id} className="card p-3 flex items-center gap-3">
                   <span className="h-9 w-1.5 rounded-full shrink-0" style={{ background: day?.color ?? '#64748b' }} />
@@ -189,6 +210,11 @@ export default function Historial() {
                     <div className="text-xs text-slate-400">
                       Semana {s.week} · {shortDate(s.date)} · {setsDone} series · {vol.toLocaleString('es-ES')} kg
                     </div>
+                    {swapped.length > 0 && (
+                      <div className="text-xs text-violet-300/80 mt-0.5 truncate">
+                        🔄 {swapped.map((e) => e.swap!.name).join(' · ')}
+                      </div>
+                    )}
                     {s.notes && <div className="text-xs text-slate-500 mt-0.5 truncate">📝 {s.notes}</div>}
                   </div>
                   <button onClick={() => deleteSession(s.id)} className="text-slate-500 hover:text-rose-400 p-1 shrink-0">
