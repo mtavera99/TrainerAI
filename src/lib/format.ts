@@ -33,3 +33,21 @@ export function fmt(n: number, decimals = 0): string {
     maximumFractionDigits: decimals,
   })
 }
+
+
+/**
+ * Identificador estable a partir de un texto libre. Se usa para las variantes
+ * que el usuario escribe a mano: si dos sesiones distintas escriben "Curl con
+ * barra recta", ambas caen en el mismo id y comparten historial de cargas. Sin
+ * esto, cada variante libre sería un ejercicio nuevo cada semana y nunca
+ * acumularía progresión.
+ */
+export function slug(text: string): string {
+  return text
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 40)
+}

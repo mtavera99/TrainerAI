@@ -123,7 +123,10 @@ export default function Entreno({
         Al abrir un día verás el{' '}
         <span className="text-slate-200 font-semibold">peso y las reps sugeridas</span> para esta
         semana, calculadas a partir de lo que registraste antes, y podrás desplegar el porqué de
-        cada decisión. ⭐ marca los días de tu prioridad nº1.
+        cada decisión. Si haces otra versión de un ejercicio, usa{' '}
+        <span className="text-slate-200 font-semibold">Cámbialo</span> en su tarjeta: queda
+        registrado el que hiciste de verdad y progresa con sus propios kilos. ⭐ marca los días de
+        tu prioridad nº1.
       </div>
     </div>
   )

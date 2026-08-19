@@ -7,20 +7,29 @@ import {
   Info,
   Minus,
   Plus,
+  Repeat2,
   Timer,
 } from 'lucide-react'
 import type {
   ExercisePrescription,
+  ExerciseTemplate,
   LoggedExercise,
   LoggedSet,
+  LoggedSwap,
   ProgressionAction,
   SessionLog,
   WorkoutDayTemplate,
 } from '../types'
 import { useApp } from '../context/AppContext'
-import { prescribeDay } from '../lib/progression'
-import { todayISO, uid } from '../lib/format'
+import {
+  lastSwapForSlot,
+  prescribeDay,
+  prescribeExercise,
+} from '../lib/progression'
+import { slug, todayISO, uid } from '../lib/format'
 import { Muscle, ProgressBar, ProgressRing, RestTimer } from '../components/ui'
+
+type SwapMap = Record<string, LoggedSwap | undefined>
 
 function blankSets(p: ExercisePrescription): LoggedSet[] {
   return Array.from({ length: p.sets }).map(() => ({
@@ -31,23 +40,37 @@ function blankSets(p: ExercisePrescription): LoggedSet[] {
   }))
 }
 
-function buildDraft(
+function hasData(le: LoggedExercise | undefined): boolean {
+  return !!le?.sets.some((st) => st.done || st.reps > 0)
+}
+
+/**
+ * Variante preseleccionada de cada hueco.
+ *
+ * Se elige la última que usaste en ese hueco: si el antebrazo lo haces casi
+ * siempre con barra recta, la app te la ofrece ya puesta en lugar de volver a
+ * la polea cada semana y obligarte a cambiarla a mano.
+ *
+ * Los huecos que YA tienen series registradas se dejan como estén: reetiquetar
+ * un ejercicio que ya registraste sería falsear el historial.
+ */
+function defaultSwaps(
   day: WorkoutDayTemplate,
-  week: number,
   sessions: SessionLog[],
-): SessionLog {
-  const prescriptions = prescribeDay(day, week, sessions)
-  return {
-    id: uid('sess-'),
-    dayId: day.id,
-    week,
-    date: todayISO(),
-    exercises: day.exercises.map((ex) => ({
-      exerciseId: ex.id,
-      sets: blankSets(prescriptions.find((x) => x.exerciseId === ex.id)!),
-    })),
-    completed: false,
+  stored?: SessionLog,
+): SwapMap {
+  const out: SwapMap = {}
+  for (const ex of day.exercises) {
+    const le = stored?.exercises.find((e) => e.exerciseId === ex.id)
+    if (le?.swap) {
+      out[ex.id] = le.swap
+      continue
+    }
+    if (hasData(le)) continue
+    const last = lastSwapForSlot(sessions, ex.id)
+    if (last) out[ex.id] = last
   }
+  return out
 }
 
 /**
@@ -64,12 +87,16 @@ function reconcile(
   stored: SessionLog,
   day: WorkoutDayTemplate,
   prescriptions: ExercisePrescription[],
+  swaps: SwapMap,
 ): SessionLog {
   const fromTemplate: LoggedExercise[] = day.exercises.map((ex) => {
     const found = stored.exercises.find((e) => e.exerciseId === ex.id)
-    if (found && found.sets.length > 0) return found
+    if (found && found.sets.length > 0) {
+      return { ...found, swap: found.swap ?? swaps[ex.id] }
+    }
     return {
       exerciseId: ex.id,
+      swap: swaps[ex.id],
       sets: blankSets(prescriptions.find((x) => x.exerciseId === ex.id)!),
     }
   })
@@ -79,6 +106,32 @@ function reconcile(
   )
 
   return { ...stored, exercises: [...fromTemplate, ...orphans] }
+}
+
+/** Sesión inicial: borrador nuevo o la guardada, ya con sus variantes puestas */
+function initialSession(
+  day: WorkoutDayTemplate,
+  week: number,
+  sessions: SessionLog[],
+  existing?: SessionLog,
+): SessionLog {
+  const swaps = defaultSwaps(day, sessions, existing)
+  const prescriptions = prescribeDay(day, week, sessions, swaps)
+
+  if (existing) return reconcile(existing, day, prescriptions, swaps)
+
+  return {
+    id: uid('sess-'),
+    dayId: day.id,
+    week,
+    date: todayISO(),
+    exercises: day.exercises.map((ex) => ({
+      exerciseId: ex.id,
+      swap: swaps[ex.id],
+      sets: blankSets(prescriptions.find((x) => x.exerciseId === ex.id)!),
+    })),
+    completed: false,
+  }
 }
 
 export default function SessionLogger({
@@ -92,25 +145,39 @@ export default function SessionLogger({
 }) {
   const { state, saveSession, deleteSession } = useApp()
 
-  const existing = useMemo(
-    () => state.sessions.find((s) => s.dayId === day.id && s.week === week),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  // Foto de las sesiones al abrir la pantalla: las prescripciones no deben
+  // recalcularse con cada autoguardado, el peso objetivo tiene que quedarse
+  // quieto mientras registras.
+  const snapshot = useRef(state.sessions).current
 
-  const prescriptions = useMemo(
-    () => prescribeDay(day, week, state.sessions),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [day.id, week],
+  const existing = useMemo(
+    () => snapshot.find((s) => s.dayId === day.id && s.week === week),
+    [snapshot, day.id, week],
   )
 
   const [session, setSession] = useState<SessionLog>(() =>
-    existing
-      ? reconcile(existing, day, prescriptions)
-      : buildDraft(day, week, state.sessions),
+    initialSession(day, week, snapshot, existing),
   )
   const [openInfo, setOpenInfo] = useState<string | null>(null)
+  const [openSwap, setOpenSwap] = useState<string | null>(null)
   const [rest, setRest] = useState<{ seconds: number; label: string; key: number } | null>(null)
+
+  // La variante elegida vive en la propia sesión (`le.swap`), que es la única
+  // fuente de verdad: así se autoguarda con todo lo demás y no hay dos estados
+  // que puedan desincronizarse.
+  //
+  // Las prescripciones se recalculan al cambiar de variante, porque cada una
+  // tiene su propio historial de cargas y su propio escalón de peso.
+  const swapKey = session.exercises
+    .map((e) => `${e.exerciseId}:${e.swap?.id ?? ''}`)
+    .join('|')
+
+  const prescriptions = useMemo(() => {
+    const swaps: SwapMap = {}
+    for (const e of session.exercises) swaps[e.exerciseId] = e.swap
+    return prescribeDay(day, week, snapshot, swaps)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [day.id, week, swapKey])
 
   // Autoguardado: cada cambio se persiste como borrador para no perder
   // nada al cambiar de pestaña o salir. Se omite el primer render (el
@@ -177,6 +244,29 @@ export default function SessionLogger({
         e.exerciseId === exId ? { ...e, sets: e.sets.filter((_, i) => i !== idx) } : e,
       ),
     }))
+  }
+
+  /**
+   * Cambiar el ejercicio de un hueco por otra variante.
+   *
+   * Si todavía no has registrado nada, se rehacen las filas con el peso
+   * sugerido de ESA variante (los kilos de una barra recta no son los de la
+   * polea). Si ya habías apuntado series, se conservan y solo se reetiqueta:
+   * el caso típico es acordarte a mitad de la serie de que hoy usaste la barra.
+   */
+  const changeSwap = (exId: string, swap: LoggedSwap | undefined) => {
+    const ex = day.exercises.find((e) => e.id === exId)
+    if (!ex) return
+    setSession((s) => ({
+      ...s,
+      exercises: s.exercises.map((e) => {
+        if (e.exerciseId !== exId) return e
+        if (hasData(e)) return { ...e, swap }
+        const p = prescribeExercise(ex, week, snapshot, swap)
+        return { exerciseId: exId, swap, sets: blankSets(p) }
+      }),
+    }))
+    setOpenSwap(null)
   }
 
   /**
@@ -268,6 +358,17 @@ export default function SessionLogger({
           const exDone = le.sets.filter((s) => s.done).length
           const complete = exDone >= le.sets.length
 
+          // Lo que se muestra es la variante que estás haciendo hoy, no la de
+          // plantilla: si hoy toca barra recta, la tarjeta dice barra recta.
+          const swap = le.swap
+          const shownName = swap?.name ?? ex.name
+          const shownEquipment = swap?.equipment ?? ex.equipment
+          const loadStep = swap?.loadStep ?? ex.loadStep
+          const swapNote = swap
+            ? ex.swaps?.find((sw) => sw.id === swap.id)?.note
+            : undefined
+          const noteText = swapNote ?? ex.note
+
           return (
             <div
               key={ex.id}
@@ -281,20 +382,28 @@ export default function SessionLogger({
 
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h3 className="font-bold leading-tight">{ex.name}</h3>
+                    <h3 className="font-bold leading-tight">{shownName}</h3>
                     {ex.primary && (
                       <span className="chip bg-brand-500/15 text-brand-300">principal</span>
                     )}
+                    {swap && (
+                      <span className="chip bg-violet-500/15 text-violet-300">sustituido</span>
+                    )}
                   </div>
+                  {swap && (
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      En el programa: {ex.name}
+                    </p>
+                  )}
                   <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                     <Muscle>{ex.muscle}</Muscle>
-                    <Muscle>{ex.equipment}</Muscle>
+                    <Muscle>{shownEquipment}</Muscle>
                     {ex.unilateral && <Muscle>por lado</Muscle>}
                     {ex.emphasis && <Muscle>énfasis {ex.emphasis}</Muscle>}
                   </div>
                 </div>
 
-                {ex.note && (
+                {noteText && (
                   <button
                     onClick={() => setOpenInfo(openInfo === ex.id ? null : ex.id)}
                     className={`btn-ghost !p-2 shrink-0 ${
@@ -335,9 +444,19 @@ export default function SessionLogger({
                 </div>
               )}
 
-              {openInfo === ex.id && ex.note && (
+              {/* Sustituir el ejercicio por otra variante del mismo estímulo */}
+              <SwapPicker
+                ex={ex}
+                current={swap}
+                open={openSwap === ex.id}
+                onToggle={() => setOpenSwap(openSwap === ex.id ? null : ex.id)}
+                onPick={(sw) => changeSwap(ex.id, sw)}
+                keepsData={exDone > 0 || le.sets.some((st) => st.reps > 0)}
+              />
+
+              {openInfo === ex.id && noteText && (
                 <p className="mt-3 text-xs text-slate-300 bg-slate-800/60 border border-slate-700/60 rounded-xl p-3 leading-relaxed animate-fade-in">
-                  🎯 {ex.note}
+                  🎯 {noteText}
                 </p>
               )}
 
@@ -369,13 +488,28 @@ export default function SessionLogger({
                     ) : null}
                   </div>
 
+                  {/* Qué significa el número de reps, que depende de la decisión */}
+                  <p className="mt-1.5 text-[11px] text-slate-500">
+                    {p.action === 'sumar-reps'
+                      ? `Objetivo en tu mejor serie. Las demás pueden caer, pero no por debajo de ${p.repMin}.`
+                      : p.action === 'consolidar'
+                        ? `Mínimo en TODAS las series. Ahí está el trabajo de esta semana.`
+                        : p.action === 'subir-peso'
+                          ? `Vuelves al pie del rango (${p.repMin}-${p.repMax}) con el peso nuevo.`
+                          : `Rango de la fase: ${p.repMin}-${p.repMax} reps.`}
+                  </p>
+
                   {(p.lastTop || p.e1rm) && (
                     <div className="mt-2 flex items-center gap-3 text-[11px] text-slate-500 flex-wrap nums">
                       {p.lastTop && (
                         <span>
-                          S{p.lastTop.week}:{' '}
+                          Este día, S{p.lastTop.week}:{' '}
                           <span className="text-slate-400">
-                            {p.lastTop.weight} kg × {p.lastTop.reps} · RIR {p.lastTop.rir}
+                            {p.lastTop.weight} kg ×{' '}
+                            {p.lastTop.reps === p.lastTop.repsBest
+                              ? p.lastTop.reps
+                              : `${p.lastTop.reps}-${p.lastTop.repsBest}`}{' '}
+                            · RIR {p.lastTop.rir}
                           </span>
                         </span>
                       )}
@@ -402,7 +536,7 @@ export default function SessionLogger({
                 <div className="grid grid-cols-[22px_1fr_1fr_1fr_44px] gap-2 section-label px-1">
                   <span>#</span>
                   <span className="text-center">
-                    {ex.timeBased ? 'seg' : ex.equipment === 'Peso corporal' ? 'lastre' : 'kg'}
+                    {ex.timeBased ? 'seg' : shownEquipment === 'Peso corporal' ? 'lastre' : 'kg'}
                   </span>
                   <span className="text-center">{unit}</span>
                   <span className="text-center">RIR</span>
@@ -426,7 +560,7 @@ export default function SessionLogger({
                     {!ex.timeBased ? (
                       <NumInput
                         value={st.weight}
-                        step={ex.loadStep || 1}
+                        step={loadStep || 1}
                         onChange={(v) => updateSet(ex.id, i, { weight: v })}
                       />
                     ) : (
@@ -536,6 +670,192 @@ export default function SessionLogger({
   )
 }
 
+/**
+ * Selector de variante de un ejercicio.
+ *
+ * Existe porque el programa nombra máquinas concretas y la realidad no siempre
+ * las ofrece —ni siempre son las que mejor se sienten—. Antes había que
+ * registrar el curl de antebrazo con barra recta como si fuera en polea, lo que
+ * metía kilos incomparables en el mismo historial. Ahora cada variante lleva su
+ * propia progresión y el volumen del músculo no cambia.
+ *
+ * Siempre hay una opción libre: si haces algo que no está en la lista, se
+ * escribe y queda registrado con su propio historial.
+ */
+function SwapPicker({
+  ex,
+  current,
+  open,
+  onToggle,
+  onPick,
+  keepsData,
+}: {
+  ex: ExerciseTemplate
+  current?: LoggedSwap
+  open: boolean
+  onToggle: () => void
+  onPick: (swap: LoggedSwap | undefined) => void
+  keepsData: boolean
+}) {
+  const [text, setText] = useState('')
+  const catalog = ex.swaps ?? []
+
+  type Option = {
+    key: string
+    name: string
+    equipment: string
+    note?: string
+    swap?: LoggedSwap
+  }
+
+  const options: Option[] = [
+    {
+      key: '',
+      name: ex.name,
+      equipment: ex.equipment,
+      note: 'El del programa.',
+      swap: undefined,
+    },
+    ...catalog.map((sw) => ({
+      key: sw.id,
+      name: sw.name,
+      equipment: sw.equipment,
+      note: sw.note,
+      swap: {
+        id: sw.id,
+        name: sw.name,
+        equipment: sw.equipment,
+        loadStep: sw.loadStep,
+      } as LoggedSwap,
+    })),
+  ]
+
+  // Una variante escrita a mano no está en el catálogo, pero tiene que
+  // aparecer como seleccionada o parecería que no se guardó.
+  if (current?.custom && !options.some((o) => o.key === current.id)) {
+    options.push({
+      key: current.id,
+      name: current.name,
+      equipment: current.equipment ?? ex.equipment,
+      note: 'Variante que escribiste tú.',
+      swap: current,
+    })
+  }
+
+  const submitCustom = () => {
+    const name = text.trim()
+    if (name.length < 3) return
+    onPick({
+      id: `libre-${slug(name)}`,
+      name,
+      equipment: ex.equipment,
+      loadStep: ex.loadStep,
+      custom: true,
+    })
+    setText('')
+  }
+
+  return (
+    <div className="mt-3">
+      <button
+        onClick={onToggle}
+        className={`w-full flex items-center gap-2 rounded-xl border px-3 py-2 text-[11px] font-semibold transition-colors ${
+          open
+            ? 'border-brand-500/50 bg-brand-500/10 text-brand-300'
+            : 'border-slate-700/60 bg-slate-800/40 text-slate-400 hover:text-slate-200'
+        }`}
+      >
+        <Repeat2 size={13} className="shrink-0" />
+        <span className="flex-1 text-left truncate">
+          {current ? `Hoy: ${current.name}` : '¿Hoy hiciste otro ejercicio? Cámbialo'}
+        </span>
+        <ChevronDown
+          size={13}
+          className={`shrink-0 transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+        />
+      </button>
+
+      {open && (
+        <div className="mt-2 space-y-1.5 animate-fade-in">
+          {options.map((o) => {
+            const active = (current?.id ?? '') === o.key
+            return (
+              <button
+                key={o.key || 'plantilla'}
+                onClick={() => onPick(o.swap)}
+                className={`w-full text-left rounded-xl border p-2.5 transition-colors ${
+                  active
+                    ? 'border-brand-500/60 bg-brand-500/10'
+                    : 'border-slate-700/60 bg-slate-800/40 hover:border-slate-600'
+                }`}
+              >
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`grid place-items-center h-4 w-4 rounded-full border shrink-0 ${
+                      active ? 'border-brand-400 bg-brand-500' : 'border-slate-600'
+                    }`}
+                  >
+                    {active && <Check size={10} strokeWidth={4} className="text-white" />}
+                  </span>
+                  <span
+                    className={`text-xs font-semibold flex-1 min-w-0 ${
+                      active ? 'text-brand-200' : 'text-slate-300'
+                    }`}
+                  >
+                    {o.name}
+                  </span>
+                  <span className="chip bg-slate-700/60 text-slate-400 shrink-0">
+                    {o.equipment}
+                  </span>
+                </div>
+                {o.note && (
+                  <p className="text-[11px] text-slate-500 mt-1.5 ml-6 leading-relaxed">
+                    {o.note}
+                  </p>
+                )}
+              </button>
+            )
+          })}
+
+          {/* Variante libre: nunca te quedas sin forma de registrar la verdad */}
+          <div className="rounded-xl border border-slate-700/60 bg-slate-800/40 p-2.5">
+            <label className="section-label">Otro ejercicio (escríbelo)</label>
+            <div className="flex gap-2 mt-1.5">
+              <input
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && submitCustom()}
+                placeholder="Ej: curl de muñeca con barra recta"
+                className="input !py-2 !text-xs"
+              />
+              <button
+                onClick={submitCustom}
+                disabled={text.trim().length < 3}
+                className="btn-primary !px-3 !py-2 !text-xs shrink-0 disabled:opacity-40"
+              >
+                Usar
+              </button>
+            </div>
+          </div>
+
+          <p className="text-[11px] text-slate-500 leading-relaxed pt-0.5">
+            Cada variante lleva su <span className="text-slate-400">propio historial de cargas</span>{' '}
+            (20 kg de barra recta no son 20 kg de polea), pero cuenta las mismas series para el
+            volumen del músculo.
+            {keepsData && (
+              <span className="text-amber-300">
+                {' '}
+                Ya tienes series apuntadas aquí: al cambiar se conservan y solo se reetiqueta el
+                ejercicio.
+              </span>
+            )}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** Explicación de la decisión del motor, plegable para no saturar la pantalla */
 function Why({ text }: { text: string }) {
   const [open, setOpen] = useState(false)
@@ -562,6 +882,7 @@ const ACTION_CHIPS: Record<ProgressionAction, { label: string; cls: string }> = 
   'primera-vez': { label: 'calibrar', cls: 'bg-slate-700 text-slate-300' },
   'subir-peso': { label: '↑ sube peso', cls: 'bg-emerald-500/15 text-emerald-300' },
   'sumar-reps': { label: '+ reps', cls: 'bg-sky-500/15 text-sky-300' },
+  consolidar: { label: 'iguala las series', cls: 'bg-amber-500/15 text-amber-300' },
   'ajustar-por-rir': { label: 'carga corta', cls: 'bg-amber-500/15 text-amber-300' },
   'romper-estancamiento': {
     label: 'romper estancamiento',
