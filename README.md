@@ -57,16 +57,51 @@ Juegas **fútbol los viernes**.
 
 ### El orden del día es la lista de prioridad de recorte
 
-Quedarse sin tiempo no es una excepción: pasa casi todas las semanas. El
-problema no era eso, era que la app no opinaba sobre **qué** recortar, así que
-lo que se caía era siempre lo último de la lista. Y lo último eran los brazos:
-en el día de empuje, press cerrado y antebrazo; en el día llamado *Hombro +
-Brazos*, el bíceps empezaba en 5ª posición.
+Quedarse sin tiempo un día suelto pasa cuando tienes trabajo. Eso no se arregla
+recortando el programa —el volumen total sigue siendo el mismo, 117 series
+semanales frente a las 115 del bloque anterior— sino decidiendo **de antemano
+qué sobra** cuando la sesión se corta.
 
-Ahora el orden de cada día es su orden de importancia, y los ejercicios que
-tienen **otra dosis en la semana** van marcados como `recortable` en la app: la
-3ª tanda de laterales, la 2ª de dorsal, el aislamiento de pecho. Si el tiempo
-aprieta, pierdes redundancia en lugar de perder tu prioridad.
+Antes la app no opinaba, así que lo que se caía era siempre lo último de la
+lista. Y lo último eran los brazos: en el día de empuje, press cerrado y
+antebrazo; en el día llamado *Hombro + Brazos*, el bíceps empezaba en 5ª
+posición. No fue mala suerte, fue estructura.
+
+Ahora el orden de cada día **es** su orden de importancia, y todo lo que tiene
+otra dosis en la semana va marcado como `recortable`. En la pantalla del entreno
+hay un botón **"¿Hoy tienes poco tiempo?"** que los pliega y te deja la lista
+corta: en el día de empuje, 5 ejercicios y 16 series en lugar de 8 y 25.
+
+| Día | Completo | Con prisa |
+|---|---|---|
+| Lunes · Pierna A | 6 ej · 20 series | 5 ej · 17 |
+| Martes · Empuje | 8 ej · 25 series | 5 ej · 16 |
+| Miércoles · Pierna B | 6 ej · 21 series | 5 ej · 18 |
+| Jueves · Espalda + Bíceps | 7 ej · 24 series | 5 ej · 18 |
+| Sábado · Brazos + Hombro | 8 ej · 27 series | 6 ej · 21 |
+
+En los cinco casos el brazo entra completo en la lista corta.
+
+### Compensar las series que faltaron: qué dice la evidencia
+
+La app calcula esto sola en *Inicio* (tarjeta **Series que faltaron**), y la
+respuesta no es intuitiva:
+
+- **La dosis que construye músculo es la semanal**, y la relación
+  dosis-respuesta es una curva suave con rendimientos decrecientes, no un
+  acantilado. Perder 3 de 14 series semanales de bíceps una semana está dentro
+  del ruido.
+- **La frecuencia es casi neutra** cuando el volumen semanal se iguala. Esto es
+  lo que hace que compensar funcione: da casi igual *qué día* caigan esas
+  series, siempre que sea en la misma semana.
+- **Pero el volumen por sesión sí tiene techo** (~11 series fraccionadas del
+  mismo músculo). Y aquí está la clave: apilar lo que faltó encima de la
+  siguiente sesión de *ese mismo músculo* mete casi todas esas series por encima
+  del techo, donde ya no aportan. Es fatiga que no compra nada.
+
+**La regla:** compensa **moviendo** a otro día de la misma semana que ya
+entrene ese músculo y tenga sitio. Nunca duplicando la dosis en una sesión que
+ya trae la suya. Y si no queda ningún día, déjalo ir.
 
 ### Qué día se corre
 

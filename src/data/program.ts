@@ -525,6 +525,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 12,
         restSec: 60,
         loadStep: 0,
+        trimmable: true,
         note: 'Sube con control, sin balanceo. Un abdomen fuerte es parte del tratamiento de tu lumbar, no un extra estético. Si vas justo de tiempo, esto es lo único que puedes recortar de este día.',
       },
     ],
@@ -613,7 +614,26 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 15,
         restSec: 45,
         loadStep: 1.25,
-        note: 'Dosis 1/2 de la semana. Rango completo de muñeca, sin prisa. Rango 12-15 y no 12-20: con 8 reps de amplitud nunca llegabas al techo y la app te dejaba con el mismo peso mes tras mes.',
+        note: 'Dosis 1/3 de la semana. Rango completo de muñeca, sin prisa. Rango 12-15 y no 12-20: con 8 reps de amplitud nunca llegabas al techo y la app te dejaba con el mismo peso mes tras mes.',
+      },
+      {
+        // Devuelto al programa, pero DETRÁS del brazo y marcado como recortable.
+        // Lo había sacado del día de brazos para hacer sitio; sacarlo del todo
+        // dejaba el deltoides anterior sin nada directo, y eso es más cambio del
+        // que pediste. Aquí encaja mejor que en el sábado: es un empuje y este
+        // es el día de empuje.
+        id: 'press-militar-smith',
+        name: 'Press militar en Smith (barra)',
+        muscle: 'Hombro anterior',
+        equipment: 'Smith',
+        sets: 3,
+        repMin: 8,
+        repMax: 12,
+        restSec: 120,
+        loadStep: 2.5,
+        secondary: { 'Hombro lateral': 0.5, Tríceps: 0.5 },
+        trimmable: true,
+        note: 'Estable, como te gusta. Baja a la clavícula sin forzar el hombro. Va detrás del tríceps a propósito: el deltoides anterior ya se lleva 4,4 series fraccionadas de los press de este día, así que si hay que dejar algo, se deja esto antes que el brazo.',
       },
       {
         id: 'aperturas-maquina-inclinada',
@@ -746,6 +766,26 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         trimmable: true,
         note: 'Dosis 2ª de tres del deltoide lateral. Recortable: el lateral ya está cubierto martes y sábado, así que es lo primero que sobra si el tiempo aprieta.',
       },
+      {
+        // Devuelto al programa. Lo había quitado para acortar el día, pero
+        // Santiago tiene el tiempo: el problema no es la duración habitual, son
+        // los días sueltos en los que se corta. Además esta 3ª dosis es
+        // justamente el hueco donde recuperar el antebrazo del martes si ese día
+        // no dio tiempo, en lugar de apilarlo en la misma sesión.
+        id: 'antebrazo-polea-d3',
+        movementId: 'antebrazo-polea',
+        swaps: SWAPS_ANTEBRAZO,
+        name: 'Curl de antebrazo en polea',
+        muscle: 'Antebrazo',
+        equipment: 'Polea',
+        sets: 3,
+        repMin: 12,
+        repMax: 15,
+        restSec: 45,
+        loadStep: 1.25,
+        trimmable: true,
+        note: 'Dosis 2/3 de la semana. Marcada como recortable porque tiene dos hermanas (martes y sábado), pero si el martes te quedaste sin hacer el antebrazo, ESTE es el sitio donde recuperarlo.',
+      },
     ],
   },
 
@@ -829,6 +869,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 60,
         loadStep: 2.5,
         emphasis: 'estirado',
+        trimmable: true,
         note: 'Sentado = rodilla flexionada = sóleo, que es el que aguanta cuando corres. Complementa los gemelos de pie del lunes: entre los dos días tienes las pantorrillas cubiertas 2x/semana.',
       },
       {
@@ -933,7 +974,23 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 15,
         restSec: 45,
         loadStep: 1.25,
-        note: 'Dosis 2/2 de la semana, con una serie más y en 4ª posición en lugar de la última. El antebrazo era el músculo con peor adherencia del programa junto con el femoral: no porque faltara en el plan, sino porque iba siempre al final y se caía.',
+        note: 'Dosis 3/3 de la semana, con una serie más y en 4ª posición en lugar de la última. El antebrazo era el músculo con peor adherencia del programa junto con el femoral: no porque faltara en el plan, sino porque iba siempre al final y se caía.',
+      },
+      {
+        // Devuelta al programa: el tríceps es prioridad de este bloque y esto
+        // son 3 series más de brazo. Va en 5ª posición, todavía dentro de la
+        // parte del día que sí se hace siempre.
+        id: 'triceps-catana',
+        name: 'Extensiones catana (polea)',
+        muscle: 'Tríceps',
+        equipment: 'Polea',
+        sets: 3,
+        repMin: 12,
+        repMax: 15,
+        restSec: 60,
+        loadStep: 1.25,
+        emphasis: 'estirado',
+        note: 'Cuerda por detrás de la nuca, énfasis en estiramiento. Sube de 2 a 3 series: ahora el tríceps es prioridad y esto es volumen de brazo, que es justo lo que hay que subir.',
       },
       {
         id: 'lateral-maquina-d5',
