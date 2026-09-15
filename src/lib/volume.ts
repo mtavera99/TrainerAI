@@ -1,6 +1,6 @@
 import type { MuscleGroup, SessionLog } from '../types'
 import { WORKOUT_DAYS, findExercise, phaseForWeek } from '../data/program'
-import { plannedSets } from './progression'
+import { plannedSets, sessionsOfWeek } from './progression'
 
 // ============================================================
 // AUDITORÍA DE VOLUMEN
@@ -49,8 +49,20 @@ export const VOLUME_TARGETS: Record<MuscleGroup, [number, number]> = {
   Antebrazo: [6, 12], // punto débil, pero es un músculo pequeño
   // --- Mantener y progresar: parte media ---
   Pecho: [10, 18],
-  Bíceps: [8, 16],
-  Tríceps: [8, 16],
+  // Mismo caso que el tríceps: el bíceps se lleva media serie de cada jalón y
+  // cada remo, así que el conteo fraccionado lo empuja arriba antes de que el
+  // trabajo directo pueda crecer. Con techo 16 no cabía subir el bíceps de 9 a
+  // 12 series directas sin que el programa se pintara en ámbar, y subirlo es
+  // justo lo que hace falta: es el músculo que Santiago reporta descuidado.
+  // 18 sigue dentro de la banda de 10-20 por músculo.
+  Bíceps: [8, 18],
+  // Techo a 18 y no 16, igual que pecho y deltoide lateral. El 16 era una
+  // asimetría sin justificación: la banda útil de la literatura es 10-20 por
+  // músculo, y el tríceps recibe además media serie de cada press, así que con
+  // el conteo fraccionado llegaba al techo antes de que el trabajo DIRECTO
+  // pudiera escalar. Resultado: era el único músculo al que el programa no
+  // podía añadirle ni una serie sin pintarse en ámbar.
+  Tríceps: [8, 18],
   // Mínimo 8: con todo el volumen de press de pecho que hace, el deltoides
   // posterior necesita ese suelo para equilibrar el hombro (estética y salud
   // articular). Con el mínimo en 4, las 4 series que había salían "ok".
@@ -191,6 +203,7 @@ function statusFor(
 export function weeklyVolume(
   week: number,
   sessions: SessionLog[] = [],
+  block = 1,
 ): MuscleVolumeRow[] {
   const phase = phaseForWeek(week)
   const planned = new Map<MuscleGroup, number>()
@@ -219,10 +232,13 @@ export function weeklyVolume(
     }
   }
 
-  // Series realmente registradas esta semana
+  // Series realmente registradas esta semana.
+  //
+  // El criterio es "hay series marcadas", no "la sesión está finalizada": antes
+  // un entreno guardado como borrador no sumaba nada aquí, así que el músculo
+  // aparecía en rojo pese a haberlo entrenado.
   const done = new Map<MuscleGroup, number>()
-  for (const s of sessions) {
-    if (s.week !== week || !s.completed) continue
+  for (const s of sessionsOfWeek(sessions, week, block)) {
     for (const le of s.exercises) {
       const ex = findExercise(le.exerciseId)
       if (!ex) continue
@@ -233,9 +249,9 @@ export function weeklyVolume(
 
   const half = (n: number) => Math.round(n * 2) / 2
 
-  // Días de esta semana que ya has completado, para saber qué series YA tocaban
+  // Días de esta semana que ya has entrenado, para saber qué series YA tocaban
   const completedDays = new Set(
-    sessions.filter((s) => s.week === week && s.completed).map((s) => s.dayId),
+    sessionsOfWeek(sessions, week, block).map((s) => s.dayId),
   )
   const due = new Map<MuscleGroup, number>()
   for (const day of WORKOUT_DAYS) {
@@ -352,6 +368,7 @@ export function perSessionOverload(week: number): SessionOverload[] {
 export function underdosedMuscles(
   week: number,
   sessions: SessionLog[] = [],
+  block = 1,
 ): MuscleVolumeRow[] {
-  return weeklyVolume(week, sessions).filter((r) => r.status === 'bajo')
+  return weeklyVolume(week, sessions, block).filter((r) => r.status === 'bajo')
 }

@@ -14,7 +14,8 @@ import {
 import { useApp } from '../context/AppContext'
 import { WORKOUT_DAYS, phaseForWeek } from '../data/program'
 import { requiredRuns, runningWeek } from '../data/running'
-import { plannedSets } from '../lib/progression'
+import { plannedSets, sessionsOfWeek } from '../lib/progression'
+import { suggestedWeek } from '../lib/audit'
 import {
   PER_SESSION_CEILING,
   perSessionOverload,
@@ -42,12 +43,30 @@ export default function Dashboard({
   onOpenDay: (dayId: string) => void
   goRunning: () => void
 }) {
-  const { state } = useApp()
+  const { state, setCurrentWeek } = useApp()
   const week = state.currentWeek
   const phase = phaseForWeek(week)
 
+  // Semana que toca según las fechas de tus entrenos. La app nunca la cambia
+  // sola —podrías estar repasando una semana pasada a propósito— pero avisa,
+  // porque olvidarse de las flechas apilaba todo el bloque en la semana 1.
+  const calendarWeek = useMemo(
+    () => suggestedWeek(state.sessions, state.blockLengthWeeks, state.currentBlock ?? 1),
+    [state.sessions, state.blockLengthWeeks, state.currentBlock],
+  )
+  const weekMismatch =
+    calendarWeek !== undefined && calendarWeek !== week ? calendarWeek : undefined
+
+  // Criterio único en toda la app: un día está entrenado si tiene series
+  // marcadas. Antes exigía haber pulsado "Finalizar", así que un entreno hecho
+  // y guardado como borrador aparecía sin empezar.
+  const block = state.currentBlock ?? 1
+
+  // Criterio único en toda la app: un día está entrenado si tiene series
+  // marcadas. Antes exigía haber pulsado "Finalizar", así que un entreno hecho
+  // y guardado como borrador aparecía sin empezar.
   const doneThisWeek = new Set(
-    state.sessions.filter((s) => s.week === week && s.completed).map((s) => s.dayId),
+    sessionsOfWeek(state.sessions, week, block).map((s) => s.dayId),
   )
 
   const totalStrength = WORKOUT_DAYS.length
@@ -55,7 +74,10 @@ export default function Dashboard({
   const rw = runningWeek(week)
   const firstName = state.profile.name.split(' ')[0]
 
-  const volume = useMemo(() => weeklyVolume(week, state.sessions), [week, state.sessions])
+  const volume = useMemo(
+    () => weeklyVolume(week, state.sessions, block),
+    [week, state.sessions, block],
+  )
   const overloads = useMemo(() => perSessionOverload(week), [week])
   const gain = useMemo(
     () => gainRateReport(state.profile, state.bodyweightLog),
@@ -72,9 +94,29 @@ export default function Dashboard({
     <div className="space-y-4">
       <PageHeader
         subtitle={`Hola, ${firstName} 👋`}
-        title={`Semana ${week}`}
+        title={`Bloque ${block} · Semana ${week}`}
         right={<PhaseBadge phase={phase.name} />}
       />
+
+      {/* Aviso de desajuste de semana */}
+      {weekMismatch !== undefined && (
+        <button
+          onClick={() => setCurrentWeek(weekMismatch)}
+          className="card-tap w-full p-3.5 flex items-center gap-3 text-left border-amber-500/30 bg-amber-500/[0.06]"
+        >
+          <AlertTriangle size={18} className="text-amber-400 shrink-0" />
+          <span className="flex-1 min-w-0">
+            <span className="block text-sm font-semibold text-amber-200">
+              Por fechas vas por la semana {weekMismatch}, no la {week}
+            </span>
+            <span className="block text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+              Contando desde tu primer entreno registrado. Toca aquí para ponerla en{' '}
+              {weekMismatch} y que la fase y el RIR objetivo cuadren. Tus cargas no dependen de
+              esto: se calculan por fecha.
+            </span>
+          </span>
+        </button>
+      )}
 
       {/* Progreso del bloque */}
       <div className="card p-4">
@@ -118,7 +160,9 @@ export default function Dashboard({
         <div className="space-y-2">
           {WORKOUT_DAYS.map((d) => {
             const done = doneThisWeek.has(d.id)
-            const session = state.sessions.find((s) => s.dayId === d.id && s.week === week)
+            const session = sessionsOfWeek(state.sessions, week, block).find(
+              (s) => s.dayId === d.id,
+            )
             const setsDone = session
               ? session.exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0)
               : 0

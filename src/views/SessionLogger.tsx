@@ -22,6 +22,7 @@ import type {
 } from '../types'
 import { useApp } from '../context/AppContext'
 import {
+  blockOf,
   lastSwapForSlot,
   prescribeDay,
   prescribeExercise,
@@ -112,17 +113,21 @@ function reconcile(
 function initialSession(
   day: WorkoutDayTemplate,
   week: number,
+  block: number,
   sessions: SessionLog[],
   existing?: SessionLog,
 ): SessionLog {
   const swaps = defaultSwaps(day, sessions, existing)
-  const prescriptions = prescribeDay(day, week, sessions, swaps)
+  const prescriptions = prescribeDay(day, week, sessions, swaps, {
+    excludeSessionId: existing?.id,
+  })
 
   if (existing) return reconcile(existing, day, prescriptions, swaps)
 
   return {
     id: uid('sess-'),
     dayId: day.id,
+    block,
     week,
     date: todayISO(),
     exercises: day.exercises.map((ex) => ({
@@ -150,13 +155,20 @@ export default function SessionLogger({
   // quieto mientras registras.
   const snapshot = useRef(state.sessions).current
 
+  const block = state.currentBlock ?? 1
+
+  // El bloque forma parte de la identidad de la sesión. Sin él, la semana 1 del
+  // bloque 3 abría la sesión de la semana 1 del bloque 2 y la sobreescribías.
   const existing = useMemo(
-    () => snapshot.find((s) => s.dayId === day.id && s.week === week),
-    [snapshot, day.id, week],
+    () =>
+      snapshot.find(
+        (s) => s.dayId === day.id && s.week === week && blockOf(s) === block,
+      ),
+    [snapshot, day.id, week, block],
   )
 
   const [session, setSession] = useState<SessionLog>(() =>
-    initialSession(day, week, snapshot, existing),
+    initialSession(day, week, block, snapshot, existing),
   )
   const [openInfo, setOpenInfo] = useState<string | null>(null)
   const [openSwap, setOpenSwap] = useState<string | null>(null)
@@ -175,9 +187,14 @@ export default function SessionLogger({
   const prescriptions = useMemo(() => {
     const swaps: SwapMap = {}
     for (const e of session.exercises) swaps[e.exerciseId] = e.swap
-    return prescribeDay(day, week, snapshot, swaps)
+    // `excludeSessionId` es imprescindible ahora que el historial es
+    // cronológico: sin él, la sesión que estás registrando se compararía
+    // consigo misma y la prescripción se perseguiría la cola.
+    return prescribeDay(day, week, snapshot, swaps, {
+      excludeSessionId: session.id,
+    })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [day.id, week, swapKey])
+  }, [day.id, week, swapKey, session.id])
 
   // Autoguardado: cada cambio se persiste como borrador para no perder
   // nada al cambiar de pestaña o salir. Se omite el primer render (el
@@ -262,7 +279,9 @@ export default function SessionLogger({
       exercises: s.exercises.map((e) => {
         if (e.exerciseId !== exId) return e
         if (hasData(e)) return { ...e, swap }
-        const p = prescribeExercise(ex, week, snapshot, swap)
+        const p = prescribeExercise(ex, week, snapshot, swap, {
+          excludeSessionId: s.id,
+        })
         return { exerciseId: exId, swap, sets: blankSets(p) }
       }),
     }))
@@ -881,6 +900,10 @@ function Why({ text }: { text: string }) {
 const ACTION_CHIPS: Record<ProgressionAction, { label: string; cls: string }> = {
   'primera-vez': { label: 'calibrar', cls: 'bg-slate-700 text-slate-300' },
   'subir-peso': { label: '↑ sube peso', cls: 'bg-emerald-500/15 text-emerald-300' },
+  'forzar-subida': {
+    label: '↑ meseta rota',
+    cls: 'bg-emerald-500/20 text-emerald-200',
+  },
   'sumar-reps': { label: '+ reps', cls: 'bg-sky-500/15 text-sky-300' },
   consolidar: { label: 'iguala las series', cls: 'bg-amber-500/15 text-amber-300' },
   'ajustar-por-rir': { label: 'carga corta', cls: 'bg-amber-500/15 text-amber-300' },

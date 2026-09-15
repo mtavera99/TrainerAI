@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { ChevronLeft, ChevronRight, CheckCircle2, Circle, Star } from 'lucide-react'
 import { useApp } from '../context/AppContext'
 import { WORKOUT_DAYS, findDay, phaseForWeek } from '../data/program'
-import { plannedSets } from '../lib/progression'
+import { plannedSets, sessionsOfWeek } from '../lib/progression'
 import { PageHeader, PhaseBadge, ProgressRing } from '../components/ui'
 import SessionLogger from './SessionLogger'
 
@@ -34,8 +34,10 @@ export default function Entreno({
     }
   }
 
+  // Igual que en Inicio: entrenado = tiene series marcadas, no "he pulsado
+  // Finalizar". Lo registrado cuenta siempre.
   const doneThisWeek = new Set(
-    state.sessions.filter((s) => s.week === week && s.completed).map((s) => s.dayId),
+    sessionsOfWeek(state.sessions, week, state.currentBlock ?? 1).map((s) => s.dayId),
   )
 
   return (
@@ -77,7 +79,11 @@ export default function Entreno({
       <div className="space-y-2">
         {WORKOUT_DAYS.map((d) => {
           const done = doneThisWeek.has(d.id)
-          const session = state.sessions.find((s) => s.dayId === d.id && s.week === week)
+          const session = sessionsOfWeek(
+            state.sessions,
+            week,
+            state.currentBlock ?? 1,
+          ).find((s) => s.dayId === d.id)
           const setsDone = session
             ? session.exercises.reduce((a, e) => a + e.sets.filter((x) => x.done).length, 0)
             : 0

@@ -73,21 +73,26 @@ No están escritos a mano en ningún sitio: los calcula `src/lib/volume.ts` a pa
 ejercicios del programa y se muestran en la pestaña *Inicio*. Si algún día se toca un
 entrenamiento y un músculo se queda corto, se ve al instante.
 
-| Músculo | Frecuencia | Series (S1-3 → S4-6 → S7-9) |
+| Músculo | Frecuencia | Series directas (S1-3 → S7-9) |
 |---|---|---|
-| Cuádriceps ⭐ | 2x | 13 → 17 → 19 |
-| Femoral ⭐ | 2x | 8 → 10 → 11 |
+| Cuádriceps ⭐ | 2x | 13 → 18 |
+| Femoral ⭐ | 2x | 8 → 11 |
 | Glúteo ⭐ | 1x (+ fútbol) | 4 → 5 |
 | Gemelos | 2x | 7 → 9 |
-| Espalda ⭐ | 2x | 13 |
+| Espalda ⭐ | 2x | 13 → 14 |
 | Deltoide lateral ⭐ | 3x | 11 |
-| Antebrazo ⭐ | 3x | 9 |
-| Tríceps | 2x | 11 |
-| Bíceps | 2x | 9 |
-| Core | 2x | 6 |
+| Antebrazo ⭐ | 3x | 9 → 10 |
+| Tríceps | 2x | 11 → 13 |
+| Bíceps | 2x | 9 → 12 |
+| Core | 2x | 6 → 8 |
 | Aductores | 1x | 3 |
 | Pecho | 1x | 11 |
-| Hombro anterior / posterior | 2x / 2x | 3 / 7 |
+| Hombro anterior / posterior | 2x / 2x | 3 / 7 → 8 |
+
+En el bloque 2, **solo la pierna escalaba**: sumaba 14 series en 10 semanas
+mientras el brazo, la espalda, el posterior y el core se quedaban exactamente
+igual de la primera a la última semana. Ahora escalan todos los grupos que
+tienen margen.
 
 ### Cómo se cuenta el volumen
 
@@ -157,28 +162,88 @@ Ahora se separa el ámbito: la **carga y el estancamiento** se juzgan sobre el h
 iguales que existe; la **fuerza del movimiento** sigue viéndose entera en las gráficas, pero no
 decide kilos.
 
-### Cuándo sube la carga (y por qué no antes)
+### Cuándo sube la carga: cuatro puertas, no una
 
-La regla mira dos series distintas de la última sesión:
+La regla mira dos series distintas de la última sesión: la **mejor** dice si la
+carga ya te queda corta, la **peor** dice si aguantas todas las series. Que las
+últimas series bajen es normal; lo que importa es que se queden dentro del rango.
 
-- la **mejor** dice si la carga ya te queda corta,
-- la **peor** dice si aguantas todas las series.
+Sube el peso si se cumple **cualquiera** de estas cuatro:
 
-Sube el peso cuando has tocado el techo del rango en tu mejor serie **y** ninguna serie ha
-caído por debajo del mínimo. Antes se exigía que **la peor** llegara al techo, y con 4 series y
-un rango de 12-20 reps eso no ocurre nunca: la última siempre cae por fatiga. El resultado era
-un ejercicio condenado a *"mantén el peso y suma 1 rep"* para siempre, con un objetivo por
-debajo de lo que ya habías hecho en la primera serie. Que las últimas series bajen es normal y
-esperado; lo que importa es que se queden dentro del rango.
+| Puerta | Cuándo |
+|---|---|
+| **Techo del rango** | Tu mejor serie llegó a `repMax` y ninguna bajó de `repMin` |
+| **Banda alta** | Llegaste al 60% superior del rango con el RIR de la fase |
+| **RIR sobrante** | Anotaste 1 rep o más de margen sobre el objetivo de la fase |
+| **Meseta de carga** | 3 sesiones seguidas con el mismo peso completando el rango |
+
+Antes existía **solo la primera**, y se exigía además que la *peor* serie tocara
+el techo. Con rangos de 12-20 reps eso no ocurre nunca, así que el ejercicio
+quedaba condenado a *"mantén el peso y suma 1 rep"* indefinidamente. En el
+bloque 2 esto pasó de verdad: las laterales del martes estuvieron **5 sesiones
+en 25 kg** y el curl predicador **6 sesiones en 30 kg**, subiendo solo reps.
+
+Las puertas 2 y 4 son las que rompen ese bucle, y además todos los rangos del
+programa se han estrechado a 3-4 reps de amplitud: un rango de 8 reps no es
+doble progresión, es una cinta de correr.
 
 Otros detalles:
 
 - Topes de seguridad: nunca sugiere subir más de un 12% ni bajar más de un 8% de una semana
-  a otra, para que un error de tecleo no te descuadre el bloque.
-- Un **mal día aislado** ya no baja la carga. Antes bastaba una sesión peor que la anterior;
-  ahora hace falta que se repita dos veces en el mismo día de la semana.
+  a otra, para que un error de tecleo no te descuadre el bloque. **Pero un escalón siempre
+  cabe**: en unas aperturas a 10 kg el disco más pequeño ya es +25%, y el tope las dejó
+  clavadas 9 sesiones seguidas por pura aritmética.
+- **Subir tiene prioridad sobre recortar.** Si llevas semanas moviendo lo mismo y completando
+  el rango, el detector de estancamiento se disparaba y te bajaba la carga un 7%. Ahí no había
+  nada que reconstruir: nunca se te había pedido más.
+- Un **mal día aislado** no baja la carga: hacen falta dos señales, ni récord nuevo ni
+  tendencia positiva del 1RM estimado.
+- Reps absurdamente altas (más de 1,8× el techo del rango) no envenenan el 1RM estimado. Un
+  `44 kg × 30 reps` mal teclado multiplicaba la carga sugerida de las semanas siguientes.
 - En péndulo/hack lleva el historial de cada máquina por separado, porque los kilos no son
   comparables entre ellas.
+
+### El historial se lee por FECHA, no por número de semana
+
+La semana se avanza a mano con las flechas de *Entreno*. El motor pedía
+"sesiones con semana < semana actual", así que si no la movías —o repetías un
+día dentro de la misma semana— tu última sesión quedaba fuera del historial y la
+app prescribía como si no existiera.
+
+Además solo contaban las sesiones **finalizadas**. El autoguardado guarda como
+borrador, así que si salías con la flecha atrás en lugar de pulsar *Finalizar*,
+el entreno quedaba completo en pantalla pero **invisible** para la progresión,
+el volumen y las gráficas.
+
+Ahora el criterio único en toda la app es: **hay series marcadas = has
+entrenado**. Y el orden es cronológico. Como efecto secundario, empezar un
+bloque nuevo ya no pierde las cargas.
+
+## Bloques
+
+El bloque dura 10 semanas y termina en descarga. Al acabar, en *Perfil* →
+**Empezar bloque N+1** vuelves a la semana 1: se reinicia la periodización
+(Acumulación, RIR 3, series base) pero **no se borra nada** y las cargas siguen
+donde las dejaste, porque se calculan por fecha.
+
+Cada sesión guarda a qué bloque pertenece. Sin eso, la semana 1 del bloque nuevo
+encontraba la sesión de la semana 1 del bloque anterior y la abría para que la
+sobreescribieras encima.
+
+## El informe del bloque
+
+La pestaña *Progreso* abre con un informe que lee **todo** el historial y
+responde lo que ninguna gráfica contesta:
+
+- **Mesetas**: qué ejercicios llevan sesiones sin mover la carga, con cuántas y
+  con la amplitud de su rango de reps al lado (que suele ser la causa).
+- **Músculos**: series por semana que has hecho *de verdad* frente a las
+  planificadas. Un músculo puede estar bien programado y quedarse corto porque
+  sus ejercicios van siempre al final del entreno y llegas fundido.
+- **Progresan**: los que sí avanzan, ordenados por ganancia de 1RM estimado.
+
+En *Perfil* puedes copiar ese historial como **texto plano** (`Copiar resumen`)
+para pegarlo donde no se pueda adjuntar un archivo, además del JSON completo.
 
 ## Cambiar un ejercicio por otro
 
