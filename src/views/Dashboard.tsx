@@ -18,9 +18,11 @@ import { plannedSets, sessionsOfWeek } from '../lib/progression'
 import { suggestedWeek } from '../lib/audit'
 import {
   PER_SESSION_CEILING,
+  compensationPlan,
   perSessionOverload,
   regionVolume,
   weeklyVolume,
+  type CompensationItem,
   type MuscleVolumeRow,
   type SessionOverload,
   type TrackStatus,
@@ -79,6 +81,10 @@ export default function Dashboard({
     [week, state.sessions, block],
   )
   const overloads = useMemo(() => perSessionOverload(week), [week])
+  const compensation = useMemo(
+    () => compensationPlan(week, state.sessions, block),
+    [week, state.sessions, block],
+  )
   const gain = useMemo(
     () => gainRateReport(state.profile, state.bodyweightLog),
     [state.profile, state.bodyweightLog],
@@ -224,6 +230,9 @@ export default function Dashboard({
 
       {/* Auditoría de volumen */}
       <VolumeCard rows={volume} deload={!!phase.deload} overloads={overloads} />
+
+      {/* Qué hacer con las series que se quedaron sin hacer */}
+      {compensation.length > 0 && <CompensationCard items={compensation} />}
 
       {/* Ritmo de ganancia */}
       <div className="card p-4">
@@ -525,6 +534,77 @@ function VolumeCard({
             Por debajo del mínimo: {low.map((r) => r.muscle).join(', ')}.
           </span>
         )}
+      </p>
+    </div>
+  )
+}
+
+
+/**
+ * Qué hacer con las series que se quedaron sin hacer.
+ *
+ * Quedarse corto un día suelto pasa cuando tienes trabajo, y la app no decía
+ * nada al respecto: te pintaba el músculo en ámbar y te dejaba improvisar. La
+ * respuesta correcta no es intuitiva, y no es "métete las series que faltaron
+ * en el siguiente entreno de ese músculo": eso las mete casi todas por encima
+ * del techo por sesión, donde ya no aportan nada y solo suman fatiga.
+ *
+ * Lo que sí funciona es moverlas a OTRO día de la misma semana que ya entrene
+ * ese músculo y tenga sitio, porque la dosis que cuenta es la semanal y la
+ * frecuencia es casi neutra cuando el volumen se iguala. Y si no queda hueco,
+ * dejarlas ir: una semana al 80% no borra un bloque.
+ */
+function CompensationCard({ items }: { items: CompensationItem[] }) {
+  const movibles = items.filter((i) => i.verdict === 'mover')
+
+  return (
+    <div className="card p-4">
+      <SectionTitle
+        right={
+          <span className="text-[11px] text-slate-500">
+            {movibles.length > 0 ? `${movibles.length} recuperables` : 'nada que mover'}
+          </span>
+        }
+      >
+        Series que faltaron
+      </SectionTitle>
+
+      <div className="space-y-2.5">
+        {items.map((i) => (
+          <div
+            key={i.muscle}
+            className="rounded-xl bg-slate-800/50 border border-slate-700/50 p-2.5"
+          >
+            <div className="flex items-center gap-2 text-sm">
+              {i.priority ? (
+                <Star size={11} className="text-amber-400 shrink-0" fill="currentColor" />
+              ) : (
+                <span className="w-[11px] shrink-0" />
+              )}
+              <span className="flex-1 min-w-0 truncate text-slate-200">{i.muscle}</span>
+              <span className="nums text-amber-300 font-bold">−{i.missing}</span>
+              <span
+                className={`chip ${
+                  i.verdict === 'mover'
+                    ? 'bg-sky-500/15 text-sky-300'
+                    : 'bg-slate-700/70 text-slate-400'
+                }`}
+              >
+                {i.verdict === 'mover' ? 'muévelas' : 'déjalo'}
+              </span>
+            </div>
+            <p className="mt-1.5 ml-[19px] text-[11px] text-slate-400 leading-relaxed">
+              {i.advice}
+            </p>
+          </div>
+        ))}
+      </div>
+
+      <p className="text-[11px] text-slate-500 mt-3 leading-relaxed">
+        La dosis que construye músculo es la <span className="text-slate-400">semanal</span>, y da
+        casi igual qué día caigan las series. Lo que no funciona es apilarlas en la siguiente
+        sesión de ese mismo músculo: por encima de ~{PER_SESSION_CEILING} series en un mismo
+        entreno dejan de aportar y solo suman fatiga. Por eso se mueven a otro día, o se dejan ir.
       </p>
     </div>
   )

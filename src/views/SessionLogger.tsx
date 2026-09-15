@@ -4,6 +4,7 @@ import {
   ArrowLeft,
   Check,
   ChevronDown,
+  Hourglass,
   Info,
   Minus,
   Plus,
@@ -170,6 +171,14 @@ export default function SessionLogger({
   const [session, setSession] = useState<SessionLog>(() =>
     initialSession(day, week, block, snapshot, existing),
   )
+  /**
+   * Modo "hoy tengo poco tiempo".
+   *
+   * No reduce el programa: solo pliega los ejercicios que tienen otra dosis en
+   * la semana, para que la decisión de qué dejar la tome el plan y no el reloj.
+   * Antes se recortaba por el final de la lista, y por el final iba el brazo.
+   */
+  const [shortOnTime, setShortOnTime] = useState(false)
   const [openInfo, setOpenInfo] = useState<string | null>(null)
   const [openSwap, setOpenSwap] = useState<string | null>(null)
   const [rest, setRest] = useState<{ seconds: number; label: string; key: number } | null>(null)
@@ -316,6 +325,17 @@ export default function SessionLogger({
 
   const chosen = slots.map((s) => variant[s.id] ?? s.options[0].id)
 
+  const trimmableCount = slots.filter((s, i) => {
+    const ex = s.options.find((o) => o.id === chosen[i]) ?? s.options[0]
+    return ex.trimmable
+  }).length
+
+  const essentialSets = slots.reduce((acc, s, i) => {
+    const ex = s.options.find((o) => o.id === chosen[i]) ?? s.options[0]
+    if (ex.trimmable) return acc
+    return acc + (prescriptions.find((p) => p.exerciseId === ex.id)?.sets ?? 0)
+  }, 0)
+
   // Los totales cuentan solo la opción elegida: si sumáramos las dos, el día
   // aparentaría más series de las que se hacen de verdad.
   const chosenLogs = session.exercises.filter((e) => chosen.includes(e.exerciseId))
@@ -365,9 +385,61 @@ export default function SessionLogger({
         </div>
       </div>
 
+      {/* Hoy vengo con prisa: qué hago */}
+      {trimmableCount > 0 && (
+        <button
+          onClick={() => setShortOnTime((v) => !v)}
+          className={`card-tap w-full p-3 flex items-center gap-2.5 text-left ${
+            shortOnTime ? 'border-amber-500/40 bg-amber-500/[0.06]' : ''
+          }`}
+        >
+          <Hourglass
+            size={16}
+            className={shortOnTime ? 'text-amber-400 shrink-0' : 'text-slate-500 shrink-0'}
+          />
+          <span className="flex-1 min-w-0">
+            <span
+              className={`block text-xs font-bold ${
+                shortOnTime ? 'text-amber-200' : 'text-slate-300'
+              }`}
+            >
+              {shortOnTime
+                ? `Modo poco tiempo · ${essentialSets} series en ${slots.length - trimmableCount} ejercicios`
+                : '¿Hoy tienes poco tiempo?'}
+            </span>
+            <span className="block text-[11px] text-slate-400 mt-0.5 leading-relaxed">
+              {shortOnTime
+                ? `Los ${trimmableCount} ejercicios recortables están plegados abajo. Todos tienen otra dosis esta semana: pierdes repetición, no prioridad.`
+                : `Te marca qué ${trimmableCount} ejercicios puedes dejar sin hacer sin perder nada importante.`}
+            </span>
+          </span>
+        </button>
+      )}
+
       <div className="space-y-3">
         {slots.map((slot, si) => {
           const ex = slot.options.find((o) => o.id === chosen[si]) ?? slot.options[0]
+          // En modo poco tiempo los recortables se colapsan a una línea: siguen
+          // ahí si te sobra un rato, pero dejan de competir por tu atención.
+          if (shortOnTime && ex.trimmable) {
+            return (
+              <div
+                key={ex.id}
+                className="rounded-xl border border-slate-800 bg-slate-900/40 px-3 py-2 flex items-center gap-2"
+              >
+                <Hourglass size={12} className="text-slate-600 shrink-0" />
+                <span className="flex-1 min-w-0 truncate text-[11px] text-slate-500">
+                  {ex.name}
+                </span>
+                <button
+                  onClick={() => setShortOnTime(false)}
+                  className="chip bg-slate-800 text-slate-400 shrink-0"
+                >
+                  mostrar
+                </button>
+              </div>
+            )
+          }
           const p = prescriptions.find((x) => x.exerciseId === ex.id)
           const le = session.exercises.find((e) => e.exerciseId === ex.id)
           // Cinturón de seguridad: si el programa cambia y falta algo, se omite
@@ -404,6 +476,14 @@ export default function SessionLogger({
                     <h3 className="font-bold leading-tight">{shownName}</h3>
                     {ex.primary && (
                       <span className="chip bg-brand-500/15 text-brand-300">principal</span>
+                    )}
+                    {/* Qué se puede dejar sin hacer si el tiempo aprieta. Antes
+                        la app no opinaba y lo que se caía era siempre lo último
+                        de la lista, que resultaban ser los brazos. */}
+                    {ex.trimmable && (
+                      <span className="chip bg-slate-700/70 text-slate-400">
+                        recortable
+                      </span>
                     )}
                     {swap && (
                       <span className="chip bg-violet-500/15 text-violet-300">sustituido</span>

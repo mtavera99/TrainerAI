@@ -99,6 +99,20 @@ export interface ExerciseTemplate {
   /** Si es un ejercicio principal (prioridad de progresión) */
   primary?: boolean
   /**
+   * Ejercicio que SE PUEDE recortar si te quedas sin tiempo.
+   *
+   * Existe porque quedarse sin tiempo no es una excepción, es lo que pasa casi
+   * todas las semanas. Antes la app no opinaba, así que lo que se caía era
+   * siempre lo último de la lista, y lo último eran los brazos. Marcar
+   * explícitamente qué sobra convierte "no me dio el tiempo" en una decisión
+   * correcta en lugar de un accidente.
+   *
+   * Solo se marca lo que tiene otra dosis en la semana: la 3ª tanda de
+   * laterales o la 2ª de dorsal se pueden perder sin consecuencias, la única
+   * de bíceps no.
+   */
+  trimmable?: boolean
+  /**
    * Si está presente, este ejercicio es la ALTERNATIVA del ejercicio con ese
    * id: se hace uno de los dos, nunca los dos. No suma al volumen planificado.
    */

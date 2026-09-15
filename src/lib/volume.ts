@@ -42,27 +42,22 @@ import { plannedSets, sessionsOfWeek } from './progression'
 export const VOLUME_TARGETS: Record<MuscleGroup, [number, number]> = {
   // --- Prioridades del bloque: parte alta de la banda ---
   Cuádriceps: [12, 20],
-  Femoral: [10, 18],
+  // Pasa a mantenimiento: no era prioridad y era el músculo con peor
+  // adherencia real del programa (64% de lo planificado).
+  Femoral: [8, 16],
   Glúteo: [8, 16],
-  Espalda: [12, 20],
+  Espalda: [10, 20],
   'Hombro lateral': [10, 18],
   Antebrazo: [6, 12], // punto débil, pero es un músculo pequeño
   // --- Mantener y progresar: parte media ---
   Pecho: [10, 18],
-  // Mismo caso que el tríceps: el bíceps se lleva media serie de cada jalón y
-  // cada remo, así que el conteo fraccionado lo empuja arriba antes de que el
-  // trabajo directo pueda crecer. Con techo 16 no cabía subir el bíceps de 9 a
-  // 12 series directas sin que el programa se pintara en ámbar, y subirlo es
-  // justo lo que hace falta: es el músculo que Santiago reporta descuidado.
-  // 18 sigue dentro de la banda de 10-20 por músculo.
-  Bíceps: [8, 18],
-  // Techo a 18 y no 16, igual que pecho y deltoide lateral. El 16 era una
-  // asimetría sin justificación: la banda útil de la literatura es 10-20 por
-  // músculo, y el tríceps recibe además media serie de cada press, así que con
-  // el conteo fraccionado llegaba al techo antes de que el trabajo DIRECTO
-  // pudiera escalar. Resultado: era el único músculo al que el programa no
-  // podía añadirle ni una serie sin pintarse en ámbar.
-  Tríceps: [8, 18],
+  // Bíceps y tríceps son PRIORIDAD del bloque 3, así que su techo es el techo de
+  // la banda útil de la literatura: 20 series efectivas por músculo. Estaban en
+  // 16, un número que además no dejaba subir el trabajo directo sin que el
+  // programa se pintara en ámbar, porque el conteo fraccionado ya les suma
+  // media serie de cada jalón, cada remo y cada press.
+  Bíceps: [8, 20],
+  Tríceps: [8, 20],
   // Mínimo 8: con todo el volumen de press de pecho que hace, el deltoides
   // posterior necesita ese suelo para equilibrar el hombro (estética y salud
   // articular). Con el mínimo en 4, las 4 series que había salían "ok".
@@ -106,14 +101,27 @@ export const MUSCLE_REGIONS: { label: string; members: MuscleGroup[] }[] = [
   { label: 'Brazo', members: ['Bíceps', 'Tríceps', 'Antebrazo'] },
 ]
 
-/** Músculos que este bloque prioriza (se marcan en la app) */
+/**
+ * Músculos que este bloque prioriza (se marcan en la app).
+ *
+ * BLOQUE 3 · Corregido con lo que Santiago reporta al cerrar el bloque 2:
+ *  · El cuádriceps sí era la prioridad de pierna. El FEMORAL nunca lo fue: se
+ *    colgó de la etiqueta "pierna = prioridad nº1" y acabó con 8-11 series
+ *    semanales y la peor adherencia de todo el programa (64%). Pasa a
+ *    mantenimiento, sin recortarle series: la pierna "está en el punto
+ *    correcto" y no se toca, solo deja de reclamar volumen extra.
+ *  · BÍCEPS, TRÍCEPS y ANTEBRAZO entran como prioridad. Venía de entrenar
+ *    brazo dos veces por semana con más volumen y el cambio se notó: es el
+ *    grupo que reporta "súper apagado".
+ *  · El hombro sale de la lista de prioridades porque ya responde bien. No se
+ *    le recorta nada; simplemente deja de competir por el tiempo.
+ */
 export const PRIORITY_MUSCLES: MuscleGroup[] = [
   'Cuádriceps',
-  'Femoral',
-  'Glúteo',
-  'Espalda',
-  'Hombro lateral',
+  'Bíceps',
+  'Tríceps',
   'Antebrazo',
+  'Espalda',
 ]
 
 export type VolumeStatus = 'bajo' | 'ok' | 'alto'
@@ -371,4 +379,152 @@ export function underdosedMuscles(
   block = 1,
 ): MuscleVolumeRow[] {
   return weeklyVolume(week, sessions, block).filter((r) => r.status === 'bajo')
+}
+
+
+// ============================================================
+// QUÉ HACER CUANDO SE CORTA EL TIEMPO
+// ------------------------------------------------------------
+// Quedarse sin tiempo un día suelto no es un fallo de disciplina, es lo que
+// pasa cuando tienes trabajo. La pregunta útil no es "cómo lo evito" sino
+// "cuando pase, qué hago con las series que faltaron". Y esa pregunta tiene
+// respuesta con datos, no con intuición:
+//
+//  1) LA DOSIS QUE IMPORTA ES SEMANAL, y la relación dosis-respuesta es una
+//     curva suave con rendimientos decrecientes, no un acantilado. Perder 3 de
+//     14 series semanales de bíceps una semana es un 20% menos de dosis en UNA
+//     semana: dentro del ruido. No compensa nada obsesionarse.
+//
+//  2) LA FRECUENCIA ES CASI NEUTRA cuando el volumen semanal se iguala. Esto
+//     es lo que hace que compensar FUNCIONE: da casi igual qué día hagas esas
+//     series, siempre que caigan dentro de la misma semana.
+//
+//  3) PERO EL VOLUMEN POR SESIÓN SÍ TIENE TECHO (~11 series fraccionadas del
+//     mismo músculo). Y aquí está la clave: apilar las series que faltaron
+//     encima de la siguiente sesión de ESE MISMO músculo las mete casi todas
+//     por encima del techo, donde ya no aportan. Es fatiga que no compra nada.
+//
+// De ahí la regla: compensar SÍ, pero MOVIENDO a otro día de la misma semana
+// que ya entrene ese músculo y tenga sitio por debajo del techo. Nunca
+// duplicando la dosis en una sesión que ya trae la suya. Y si no queda ningún
+// día, se deja ir: una semana al 80% no borra un bloque.
+//
+// `compensationPlan` calcula exactamente eso con tu registro: cuánto falta,
+// en qué días de lo que queda de semana cabe, y cuánto cabe en cada uno.
+// ============================================================
+
+export interface CompensationOption {
+  dayId: string
+  dayName: string
+  /** Series fraccionadas que ese día ya dedica a este músculo */
+  alreadyPlanned: number
+  /** Series que caben ahí sin pasar del techo por sesión */
+  room: number
+}
+
+export interface CompensationItem {
+  muscle: MuscleGroup
+  priority: boolean
+  /** Series que se quedaron sin hacer en los días ya entrenados */
+  missing: number
+  /** Días que quedan esta semana donde se puede recuperar */
+  options: CompensationOption[]
+  /** Series que de verdad se pueden recuperar sumando el sitio disponible */
+  recoverable: number
+  verdict: 'mover' | 'dejarlo'
+  advice: string
+}
+
+/**
+ * Plan de compensación de la semana en curso.
+ *
+ * Solo mira los músculos en los que te has quedado CORTO en días que ya
+ * entrenaste (`doneSets < dueSets`). Lo que aún no te toca no es una deuda.
+ */
+export function compensationPlan(
+  week: number,
+  sessions: SessionLog[] = [],
+  block = 1,
+): CompensationItem[] {
+  const phase = phaseForWeek(week)
+  const rows = weeklyVolume(week, sessions, block)
+  const trainedDays = new Set(
+    sessionsOfWeek(sessions, week, block).map((s) => s.dayId),
+  )
+
+  const out: CompensationItem[] = []
+
+  for (const r of rows) {
+    const missing = Math.round((r.dueSets - r.doneSets) * 10) / 10
+    if (missing < 1) continue
+
+    // Días que aún no has entrenado esta semana y que ya trabajan ese músculo
+    const options: CompensationOption[] = []
+    for (const day of WORKOUT_DAYS) {
+      if (trainedDays.has(day.id)) continue
+
+      let fractional = 0
+      for (const ex of day.exercises) {
+        if (ex.alternativeOf) continue
+        const { sets } = plannedSets(ex, week, phase, sessions)
+        if (ex.muscle === r.muscle) fractional += sets
+        const factor = ex.secondary?.[r.muscle]
+        if (factor) fractional += sets * factor
+      }
+      if (fractional === 0) continue
+
+      options.push({
+        dayId: day.id,
+        dayName: day.name.split('·')[0].trim(),
+        alreadyPlanned: Math.round(fractional * 2) / 2,
+        room: Math.max(0, Math.round((PER_SESSION_CEILING - fractional) * 2) / 2),
+      })
+    }
+
+    const room = options.reduce((a, o) => a + o.room, 0)
+    const recoverable = Math.min(missing, room)
+    const best = [...options].sort((a, b) => b.room - a.room)[0]
+
+    let advice: string
+    if (recoverable < 1) {
+      advice =
+        options.length === 0
+          ? `No queda ningún día de esta semana que entrene ${r.muscle.toLowerCase()}. Déjalo ir: perder ${missing} series una semana está dentro del ruido, y meterlas donde no tocan solo suma fatiga.`
+          : `Los días que quedan ya van llenos de ${r.muscle.toLowerCase()} (${best?.alreadyPlanned} series). Añadir más en la misma sesión pasa del techo de ~${PER_SESSION_CEILING}, donde las series dejan de aportar. Déjalo ir.`
+    } else {
+      advice = `Añade ${recoverable} serie${recoverable > 1 ? 's' : ''} en ${best!.dayName}, que ya entrena ${r.muscle.toLowerCase()} y tiene sitio para ${best!.room}. Reparte, no las apiles todas al final de una sesión.`
+    }
+
+    out.push({
+      muscle: r.muscle,
+      priority: r.priority,
+      missing,
+      options,
+      recoverable,
+      verdict: recoverable >= 1 ? 'mover' : 'dejarlo',
+      advice,
+    })
+  }
+
+  // Primero los prioritarios, y dentro de esos los que más falta les hace
+  return out.sort((a, b) => {
+    if (a.priority !== b.priority) return a.priority ? -1 : 1
+    return b.missing - a.missing
+  })
+}
+
+/**
+ * Los ejercicios que hay que hacer sí o sí en un día, y los que se pueden
+ * dejar. La lista corta es la que aguanta un día con prisa.
+ */
+export function essentialsOf(dayId: string): {
+  essential: string[]
+  trimmable: string[]
+} {
+  const day = WORKOUT_DAYS.find((d) => d.id === dayId)
+  const list = (day?.exercises ?? []).filter((e) => !e.alternativeOf)
+  return {
+    essential: list.filter((e) => !e.trimmable).map((e) => e.name),
+    trimmable: list.filter((e) => e.trimmable).map((e) => e.name),
+  }
 }

@@ -31,18 +31,77 @@ npm run preview  # previsualizar el build
 
 ## El programa (Bloque 2 · 10 semanas)
 
-Diseñado con **tus máquinas reales** y prioridades: **pierna (prioridad nº1)** sin cargar la
-lumbar → espalda → hombros → mantener pecho → integrar running. Juegas **fútbol los viernes**.
+Diseñado con **tus máquinas reales**. Prioridades del bloque 3, corregidas con lo
+que reportaste al cerrar el bloque 2:
+
+1. **Brazo** (bíceps, tríceps, antebrazo) — el grupo que quedó apagado
+2. **Cuádriceps** sin cargar la lumbar — la pierna está en su punto, no se toca
+3. **Espalda**
+4. Hombro: responde bien, se mantiene
+5. Pecho: mantenimiento
+6. Femoral: **ya no es prioridad**. Se colgó de la etiqueta "pierna = prioridad
+   nº1" y acabó con 8-11 series semanales y la peor adherencia del programa
+   (64%). No se le recorta nada, solo deja de reclamar volumen extra.
+
+Juegas **fútbol los viernes**.
 
 | Día | Enfoque | Series |
 |-----|---------|--------|
 | Lunes | **Pierna A** · péndulo *o* hack, prensa unilateral, extensiones, curl femoral tumbado, gemelos de pie, colgado | 20 → 26 |
-| Martes | Empuje · press ancho, inclinado Smith, aperturas, cruce, laterales, tríceps ×2, antebrazo | 24 |
-| Miércoles | **Pierna B** · curl femoral sentado, hip thrust, prensa profunda, aductores, gemelos sentado, crunch | 21 → 27 |
-| Jueves | Espalda + Bíceps · jalón MAG, remo máquina, pull over, deltoide posterior, laterales, curl sentado, bayesian, antebrazo | 26 |
+| Martes | Empuje · press ancho, inclinado Smith, **tríceps ×2, antebrazo**, aperturas, laterales | 22 → 24 |
+| Miércoles | **Pierna B** · curl femoral sentado, hip thrust, prensa profunda, aductores, gemelos sentado, crunch | 21 → 28 |
+| Jueves | Espalda + Bíceps · jalón MAG, remo máquina, pull over, **curl bíceps**, deltoide posterior, laterales | 21 → 24 |
 | Viernes | Fútbol ⚽ | — |
-| Sábado | Hombro + Brazos · press militar Smith, laterales, deltoide posterior, pull over, predicador, copa, catana, antebrazo | 24 |
+| Sábado | **Brazos** + Hombro · predicador, copa, bayesian, antebrazo, laterales, posterior, pull over | 24 → 27 |
 | Domingo | Descanso total | — |
+
+### El orden del día es la lista de prioridad de recorte
+
+Quedarse sin tiempo un día suelto pasa cuando tienes trabajo. Eso no se arregla
+recortando el programa —el volumen total sigue siendo el mismo, 117 series
+semanales frente a las 115 del bloque anterior— sino decidiendo **de antemano
+qué sobra** cuando la sesión se corta.
+
+Antes la app no opinaba, así que lo que se caía era siempre lo último de la
+lista. Y lo último eran los brazos: en el día de empuje, press cerrado y
+antebrazo; en el día llamado *Hombro + Brazos*, el bíceps empezaba en 5ª
+posición. No fue mala suerte, fue estructura.
+
+Ahora el orden de cada día **es** su orden de importancia, y todo lo que tiene
+otra dosis en la semana va marcado como `recortable`. En la pantalla del entreno
+hay un botón **"¿Hoy tienes poco tiempo?"** que los pliega y te deja la lista
+corta: en el día de empuje, 5 ejercicios y 16 series en lugar de 8 y 25.
+
+| Día | Completo | Con prisa |
+|---|---|---|
+| Lunes · Pierna A | 6 ej · 20 series | 5 ej · 17 |
+| Martes · Empuje | 8 ej · 25 series | 5 ej · 16 |
+| Miércoles · Pierna B | 6 ej · 21 series | 5 ej · 18 |
+| Jueves · Espalda + Bíceps | 7 ej · 24 series | 5 ej · 18 |
+| Sábado · Brazos + Hombro | 8 ej · 27 series | 6 ej · 21 |
+
+En los cinco casos el brazo entra completo en la lista corta.
+
+### Compensar las series que faltaron: qué dice la evidencia
+
+La app calcula esto sola en *Inicio* (tarjeta **Series que faltaron**), y la
+respuesta no es intuitiva:
+
+- **La dosis que construye músculo es la semanal**, y la relación
+  dosis-respuesta es una curva suave con rendimientos decrecientes, no un
+  acantilado. Perder 3 de 14 series semanales de bíceps una semana está dentro
+  del ruido.
+- **La frecuencia es casi neutra** cuando el volumen semanal se iguala. Esto es
+  lo que hace que compensar funcione: da casi igual *qué día* caigan esas
+  series, siempre que sea en la misma semana.
+- **Pero el volumen por sesión sí tiene techo** (~11 series fraccionadas del
+  mismo músculo). Y aquí está la clave: apilar lo que faltó encima de la
+  siguiente sesión de *ese mismo músculo* mete casi todas esas series por encima
+  del techo, donde ya no aportan. Es fatiga que no compra nada.
+
+**La regla:** compensa **moviendo** a otro día de la misma semana que ya
+entrene ese músculo y tenga sitio. Nunca duplicando la dosis en una sesión que
+ya trae la suya. Y si no queda ningún día, déjalo ir.
 
 ### Qué día se corre
 
@@ -75,24 +134,30 @@ entrenamiento y un músculo se queda corto, se ve al instante.
 
 | Músculo | Frecuencia | Series directas (S1-3 → S7-9) |
 |---|---|---|
+| Bíceps ⭐ | 2x | 11 → 14 |
+| Tríceps ⭐ | 2x | 10 → 12 |
+| Antebrazo ⭐ | 2x | 7 → 8 |
 | Cuádriceps ⭐ | 2x | 13 → 18 |
-| Femoral ⭐ | 2x | 8 → 11 |
-| Glúteo ⭐ | 1x (+ fútbol) | 4 → 5 |
-| Gemelos | 2x | 7 → 9 |
 | Espalda ⭐ | 2x | 13 → 14 |
-| Deltoide lateral ⭐ | 3x | 11 |
-| Antebrazo ⭐ | 3x | 9 → 10 |
-| Tríceps | 2x | 11 → 13 |
-| Bíceps | 2x | 9 → 12 |
+| Femoral | 2x | 8 → 11 |
+| Glúteo | 1x (+ fútbol) | 4 → 5 |
+| Gemelos | 2x | 7 → 9 |
+| Deltoide lateral | 3x | 10 |
+| Hombro posterior | 2x | 7 → 8 |
 | Core | 2x | 6 → 8 |
+| Pecho | 1x | 9 |
 | Aductores | 1x | 3 |
-| Pecho | 1x | 11 |
-| Hombro anterior / posterior | 2x / 2x | 3 / 7 → 8 |
+| Hombro anterior | — | 0 directas (4,5 efectivas de los press) |
 
 En el bloque 2, **solo la pierna escalaba**: sumaba 14 series en 10 semanas
 mientras el brazo, la espalda, el posterior y el core se quedaban exactamente
-igual de la primera a la última semana. Ahora escalan todos los grupos que
-tienen margen.
+igual de la primera a la última semana. Ahora escalan todos los grupos con
+margen, y los 14 músculos caen dentro de su rango en las cuatro fases.
+
+El antebrazo pasa de 3x a **2x con más series por sesión**: tres dosis de 3
+series repartidas en tres días era mucho tiempo de cambio de máquina para un
+músculo pequeño, y la tercera se caía siempre. Dos dosis de 3-4 series que sí se
+hacen valen más que tres planificadas de las que llegan dos.
 
 ### Cómo se cuenta el volumen
 
