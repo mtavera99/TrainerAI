@@ -566,47 +566,11 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         secondary: { 'Hombro anterior': 0.5, Tríceps: 0.5 },
         note: 'Banco a ~30° para pecho superior (tu prioridad). Estira abajo, no choques arriba.',
       },
-      {
-        id: 'aperturas-maquina-inclinada',
-        swaps: SWAPS_APERTURAS,
-        name: 'Aperturas en máquina inclinada',
-        muscle: 'Pecho',
-        equipment: 'Máquina',
-        sets: 2,
-        repMin: 12,
-        repMax: 15,
-        restSec: 75,
-        loadStep: 2.5,
-        emphasis: 'estirado',
-        note: 'Estiramiento máximo del pectoral, aprieta 1 s en el centro. 2 series en lugar de 3 por el mismo motivo que el cruce: el pecho estaba acumulando demasiadas series seguidas en un solo día. Como se hace en posición estirada, es de las más rentables del día y por eso se conserva.',
-      },
-      {
-        id: 'cruce-cables',
-        name: 'Cruce de cables (de abajo hacia arriba)',
-        muscle: 'Pecho',
-        equipment: 'Polea',
-        sets: 2,
-        repMin: 12,
-        repMax: 15,
-        restSec: 60,
-        loadStep: 1.25,
-        note: 'Poleas bajas cruzando hacia arriba para enfatizar fibras claviculares. Baja de 3 a 2 series porque el pecho acumulaba 14,5 series fraccionadas en esta única sesión, por encima del techo de ~11 a partir del cual añadir series al mismo entreno deja de aportar. Los 4 ejercicios se mantienen: lo que sobraba eran series al final, con el pecho ya agotado.',
-      },
-      {
-        id: 'lateral-maquina-d2',
-        movementId: 'lateral-maquina',
-        swaps: SWAPS_LATERAL,
-        name: 'Elevaciones laterales en máquina (de pie)',
-        muscle: 'Hombro lateral',
-        equipment: 'Máquina',
-        sets: 4,
-        repMin: 12,
-        repMax: 16,
-        restSec: 60,
-        loadStep: 2.5,
-        primary: true,
-        note: 'Punto débil prioritario. Sin impulso, lidera con el codo, tensión constante.',
-      },
+      // ---- EL TRÍCEPS Y EL ANTEBRAZO, ANTES DEL AISLAMIENTO DE PECHO ----
+      // El día que se te acaba el tiempo, lo que se cae es lo último. En el
+      // bloque 2 lo último de este día eran el press cerrado y el antebrazo: los
+      // dos ejercicios de brazo. Pasó de verdad, el 15 de septiembre, y es
+      // exactamente por eso que el brazo se siente apagado.
       {
         id: 'triceps-45-cbum',
         swaps: SWAPS_TRICEPS_POLEA,
@@ -619,7 +583,9 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 14,
         restSec: 75,
         loadStep: 2.5,
-        note: 'Inclinado hacia delante para estirar la cabeza larga. Estira bien arriba. Gana una serie al avanzar el bloque: en el bloque anterior el brazo era el único grupo que no escalaba nada mientras la pierna sumaba 14 series.',
+        primary: true,
+        emphasis: 'estirado',
+        note: 'Inclinado hacia delante para estirar la cabeza larga. Estira bien arriba. Sube de la 6ª a la 3ª posición del día: el tríceps es prioridad de este bloque y tiene que recibir tu esfuerzo con fuerza de verdad, no los restos.',
       },
       {
         id: 'press-cerrado',
@@ -632,7 +598,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 90,
         loadStep: 2.5,
         secondary: { Pecho: 0.5, 'Hombro anterior': 0.3 },
-        note: 'Tríceps en patrón compuesto. Codos cerca del cuerpo.',
+        note: 'Tríceps en patrón compuesto. Codos cerca del cuerpo. Ahora va 4º, con el tríceps todavía fresco.',
       },
       {
         id: 'antebrazo-polea-d2',
@@ -647,7 +613,37 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 15,
         restSec: 45,
         loadStep: 1.25,
-        note: 'Dosis 1/3 de la semana. Rango completo de muñeca, sin prisa. Rango 12-15 y no 12-20: con 8 reps de amplitud nunca llegabas al techo y la app te dejaba con el mismo peso mes tras mes.',
+        note: 'Dosis 1/2 de la semana. Rango completo de muñeca, sin prisa. Rango 12-15 y no 12-20: con 8 reps de amplitud nunca llegabas al techo y la app te dejaba con el mismo peso mes tras mes.',
+      },
+      {
+        id: 'aperturas-maquina-inclinada',
+        swaps: SWAPS_APERTURAS,
+        name: 'Aperturas en máquina inclinada',
+        muscle: 'Pecho',
+        equipment: 'Máquina',
+        sets: 2,
+        repMin: 12,
+        repMax: 15,
+        restSec: 75,
+        loadStep: 2.5,
+        emphasis: 'estirado',
+        trimmable: true,
+        note: 'Estiramiento máximo del pectoral, aprieta 1 s en el centro. Es el único aislamiento de pecho que queda: el cruce de cables se ha quitado para hacer sitio al brazo sin alargar el día. Ojo, aquí llevabas 9 sesiones seguidas en 10 kg porque el tope de subida de la app no dejaba ni poner un disco más; ya está arreglado, sube.',
+      },
+      {
+        id: 'lateral-maquina-d2',
+        movementId: 'lateral-maquina',
+        swaps: SWAPS_LATERAL,
+        name: 'Elevaciones laterales en máquina (de pie)',
+        muscle: 'Hombro lateral',
+        equipment: 'Máquina',
+        sets: 4,
+        repMin: 12,
+        repMax: 16,
+        restSec: 60,
+        loadStep: 2.5,
+        trimmable: true,
+        note: 'Sin impulso, lidera con el codo, tensión constante. Va al final y marcada como recortable no porque no importe, sino porque el hombro es el grupo que mejor te está respondiendo y tiene tres dosis en la semana: si algún día hay que dejar algo, que sea una de las tres, no la única de bíceps.',
       },
     ],
   },
@@ -704,6 +700,24 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         loadStep: 2.5,
         note: 'Aísla el dorsal y trabaja la amplitud sin fatigar bíceps.',
       },
+      // EL BÍCEPS SUBE A 4ª POSICIÓN, delante del posterior y de las laterales.
+      // En el bloque 2 iba 6º y 7º de un día de 8, detrás de tres ejercicios de
+      // espalda, el posterior y las laterales: llegabas fundido y con prisa.
+      {
+        id: 'curl-bicep-sentado',
+        swaps: SWAPS_CURL_BICEPS,
+        name: 'Curl de bíceps sentado en máquina',
+        muscle: 'Bíceps',
+        equipment: 'Máquina',
+        sets: 4,
+        maxSets: 5,
+        repMin: 10,
+        repMax: 14,
+        restSec: 60,
+        loadStep: 2.5,
+        primary: true,
+        note: 'Primera dosis de bíceps de la semana, en 4ª posición y con una serie más. Codo quieto y baja en 3 s. Aquí ya venías haciéndolo con el predicador: la app lo respeta y lleva su propio historial.',
+      },
       {
         id: 'posterior-delt-pec',
         name: 'Deltoide posterior en pec-deck (invertido)',
@@ -717,26 +731,6 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         loadStep: 2.5,
         note: 'Salud de hombro y densidad posterior. Aprieta atrás sin encoger el cuello. Es aislamiento de baja fatiga: apura a RIR 0-1 en la última serie.',
       },
-      // BRAZOS ANTES DE LAS LATERALES, a propósito. En el bloque anterior el
-      // bíceps iba en 6ª y 7ª posición de un día de 8 ejercicios, detrás de
-      // tres de espalda, el posterior y las laterales: llegabas fundido y con
-      // prisa. Las laterales son la 3ª dosis semanal del deltoide lateral (ya
-      // las haces martes y sábado), así que si algún día hay que recortar, que
-      // se recorte la dosis que está triplicada, no la única del bíceps.
-      {
-        id: 'curl-bicep-sentado',
-        swaps: SWAPS_CURL_BICEPS,
-        name: 'Curl de bíceps sentado en máquina',
-        muscle: 'Bíceps',
-        equipment: 'Máquina',
-        sets: 3,
-        maxSets: 4,
-        repMin: 10,
-        repMax: 14,
-        restSec: 60,
-        loadStep: 2.5,
-        note: 'Primera dosis de bíceps de la semana, y ahora en 5ª posición en lugar de 6ª. Codo quieto y baja en 3 s.',
-      },
       {
         id: 'lateral-maquina-d3',
         movementId: 'lateral-maquina',
@@ -749,22 +743,8 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 16,
         restSec: 60,
         loadStep: 2.5,
-        primary: true,
-        note: 'Dosis intermedia de la semana (3ª de tres). Con esto trabajas el lateral 3x (mar/jue/sáb): alta frecuencia = hombros más anchos. Va detrás del bíceps a propósito: es la dosis más prescindible del día porque el lateral ya está cubierto otros dos días.',
-      },
-      {
-        id: 'antebrazo-polea-d3',
-        movementId: 'antebrazo-polea',
-        swaps: SWAPS_ANTEBRAZO,
-        name: 'Curl de antebrazo en polea',
-        muscle: 'Antebrazo',
-        equipment: 'Polea',
-        sets: 3,
-        repMin: 12,
-        repMax: 15,
-        restSec: 45,
-        loadStep: 1.25,
-        note: 'Dosis 2/3 de la semana.',
+        trimmable: true,
+        note: 'Dosis 2ª de tres del deltoide lateral. Recortable: el lateral ya está cubierto martes y sábado, así que es lo primero que sobra si el tiempo aprieta.',
       },
     ],
   },
@@ -870,67 +850,64 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
   // ---------------- DÍA 5 · HOMBRO + AMPLITUD + BRAZOS ----------------
   {
     id: 'd5',
-    name: 'Día 5 · Hombro + Brazos',
-    focus: 'Hombro, 2ª dosis de amplitud de espalda y brazos',
+    name: 'Día 5 · Brazos + Hombro',
+    focus: 'Bíceps y tríceps en fresco, laterales y 2ª dosis de posterior y dorsal',
     color: '#8b5cf6',
+    // ============================================================
+    // ESTE DÍA SE HA DADO LA VUELTA
+    // ------------------------------------------------------------
+    // Se llamaba "Hombro + Brazos" y el brazo empezaba en la 5ª posición,
+    // detrás de dos ejercicios de hombro y del pull over. Los números del
+    // bloque 2 dicen el resto: es el día con peor adherencia junto con la
+    // pierna B (80%, 7 sesiones de 9), y cuando se recortaba se recortaba por
+    // el final, o sea el brazo.
+    //
+    // Ahora el brazo ocupa las cuatro primeras posiciones (16 series) y lo que
+    // queda al final es todo trabajo con otra dosis en la semana: las laterales
+    // son la 3ª de tres, el posterior la 2ª de dos y el pull over la 2ª de dos.
+    // Si te quedas sin tiempo, pierdes redundancia en lugar de perder tu
+    // prioridad. El orden del día ES la lista de prioridad de recorte.
+    //
+    // Han salido dos ejercicios para que esto quepa sin alargar el día:
+    //  · PRESS MILITAR: el deltoides anterior se lleva 4,5 series fraccionadas
+    //    de los tres press del martes y no es objetivo del bloque. Es lo
+    //    primero que volvería a entrar si el hombro anterior se atasca.
+    //  · CATANA: cuarto ejercicio de tríceps. La copa trabaja la misma cabeza
+    //    larga en posición estirada y con más series.
+    // ============================================================
     exercises: [
-      {
-        id: 'press-militar-smith',
-        name: 'Press militar en Smith (barra)',
-        muscle: 'Hombro anterior',
-        equipment: 'Smith',
-        sets: 3,
-        repMin: 8,
-        repMax: 12,
-        restSec: 120,
-        loadStep: 2.5,
-        primary: true,
-        secondary: { 'Hombro lateral': 0.5, Tríceps: 0.5 },
-        note: 'Estable, como te gusta. Baja a la clavícula sin forzar el hombro. Solo 3 series directas a propósito: el deltoides anterior ya se lleva mucho trabajo de los press del día de empuje.',
-      },
-      {
-        id: 'lateral-maquina-d5',
-        movementId: 'lateral-maquina',
-        swaps: SWAPS_LATERAL,
-        name: 'Elevaciones laterales en máquina (de pie)',
-        muscle: 'Hombro lateral',
-        equipment: 'Máquina',
-        sets: 4,
-        repMin: 12,
-        repMax: 16,
-        restSec: 60,
-        loadStep: 2.5,
-        primary: true,
-        note: 'Tercera dosis semanal de laterales. Alta frecuencia = hombros más anchos. En aislamiento como este puedes apretar más que en los básicos: llega a RIR 0-1 en la última serie sin miedo, la fatiga que genera es baja.',
-      },
-      // ---- BRAZOS AQUÍ, EN 3ª Y 4ª POSICIÓN ----
-      // Este día se llama "Hombro + Brazos" pero el bíceps iba 5º y el tríceps
-      // 6º y 7º, detrás de dos ejercicios de hombro Y del pull over de espalda.
-      // El día que se te hacía largo, lo que se caía siempre era el brazo: por
-      // eso lo notas descuidado aunque el papel dijera que lo entrenabas. El
-      // orden es el que decide qué recibe tu mejor esfuerzo, no la lista de
-      // ejercicios.
       {
         id: 'curl-predicador',
         swaps: SWAPS_CURL_BICEPS,
         name: 'Curl predicador',
         muscle: 'Bíceps',
         equipment: 'Máquina',
-        sets: 3,
-        maxSets: 4,
+        sets: 4,
+        maxSets: 5,
         repMin: 8,
         repMax: 12,
         restSec: 75,
         loadStep: 2.5,
-        note: 'Pico del bíceps con el brazo fijo. No rebotes abajo. 2ª dosis semanal de bíceps y ahora en 3ª posición del día, con fuerza de verdad en el brazo.',
+        primary: true,
+        note: 'Primer ejercicio del día, con el brazo entero por delante. Pico del bíceps con el brazo fijo, no rebotes abajo. Aquí llevabas 6 sesiones seguidas en 30 kg subiendo solo reps (8 → 12): la app no te dejaba subir porque esperaba el techo del rango. Ya está arreglado.',
       },
       {
-        // Movido aquí desde el día de espalda. Allí el bíceps acumulaba 8
-        // series directas MÁS las 4,5 fraccionadas que le llegan del jalón y el
-        // remo: 12,5 en una sola sesión, por encima del techo de ~11 a partir
-        // del cual añadir series al mismo entreno deja de aportar. El total
-        // semanal es el mismo (12 series), pero reparte 4 el jueves y 8 el
-        // sábado, que es el día donde el bíceps llega fresco.
+        id: 'triceps-copa',
+        swaps: SWAPS_COPA,
+        name: 'Extensión de tríceps sobre la cabeza ("copa")',
+        muscle: 'Tríceps',
+        equipment: 'Mancuerna',
+        sets: 4,
+        maxSets: 5,
+        repMin: 10,
+        repMax: 14,
+        restSec: 75,
+        loadStep: 2,
+        primary: true,
+        emphasis: 'estirado',
+        note: 'Estira la cabeza larga del tríceps, que es la que más masa aporta, y por eso es el ejercicio de tríceps que se queda y gana una serie. Codos apuntando al frente. Revisa el registro del 3 de septiembre: pusiste 30 reps y son casi seguro 13 mal tecleadas.',
+      },
+      {
         id: 'curl-bayesian',
         name: 'Curl bayesian (polea)',
         muscle: 'Bíceps',
@@ -942,22 +919,36 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         restSec: 60,
         loadStep: 1.25,
         emphasis: 'estirado',
-        note: 'Brazo detrás del cuerpo = máximo estiramiento del bíceps, que es donde más crece. Ojo: al pasar de día, la app lo trata como hueco nuevo y toma como referencia lo que movías el jueves. Ajusta el peso a lo que puedas hoy en la primera sesión.',
+        note: 'Brazo detrás del cuerpo = máximo estiramiento del bíceps, que es donde más crece. Complementa al predicador, que trabaja acortado: entre los dos cubres el bíceps en las dos longitudes.',
       },
       {
-        id: 'triceps-copa',
-        swaps: SWAPS_COPA,
-        name: 'Extensión de tríceps sobre la cabeza ("copa")',
-        muscle: 'Tríceps',
-        equipment: 'Mancuerna',
+        id: 'antebrazo-polea-d5',
+        movementId: 'antebrazo-polea',
+        swaps: SWAPS_ANTEBRAZO,
+        name: 'Curl de antebrazo en polea',
+        muscle: 'Antebrazo',
+        equipment: 'Polea',
+        sets: 4,
+        repMin: 12,
+        repMax: 15,
+        restSec: 45,
+        loadStep: 1.25,
+        note: 'Dosis 2/2 de la semana, con una serie más y en 4ª posición en lugar de la última. El antebrazo era el músculo con peor adherencia del programa junto con el femoral: no porque faltara en el plan, sino porque iba siempre al final y se caía.',
+      },
+      {
+        id: 'lateral-maquina-d5',
+        movementId: 'lateral-maquina',
+        swaps: SWAPS_LATERAL,
+        name: 'Elevaciones laterales en máquina (de pie)',
+        muscle: 'Hombro lateral',
+        equipment: 'Máquina',
         sets: 3,
-        maxSets: 4,
-        repMin: 10,
-        repMax: 14,
-        restSec: 75,
-        loadStep: 2,
-        emphasis: 'estirado',
-        note: 'Estira la cabeza larga del tríceps, que es la que más masa aporta: por eso este va antes y se recorta primero la catana. Codos apuntando al frente.',
+        repMin: 12,
+        repMax: 16,
+        restSec: 60,
+        loadStep: 2.5,
+        trimmable: true,
+        note: 'Tercera dosis semanal de laterales. En aislamiento como este puedes apretar más que en los básicos: llega a RIR 0-1 en la última serie sin miedo. Recortable: el hombro es lo que mejor te responde y ya lo trabajas martes y jueves.',
       },
       {
         id: 'posterior-delt-pec-d5',
@@ -971,7 +962,7 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 18,
         restSec: 60,
         loadStep: 2.5,
-        note: '2ª dosis semanal de deltoides posterior, que era la cabeza peor atendida del programa. Es la misma máquina del jueves a propósito: estable, ya la dominas, y la app lleva un único historial de cargas entre los dos días. Aprieta atrás sin encoger el cuello y apura a RIR 0-1: es aislamiento de baja fatiga.',
+        note: '2ª dosis semanal de deltoides posterior. Es la misma máquina del jueves a propósito: estable, ya la dominas, y la app lleva un único historial de cargas entre los dos días. Aprieta atrás sin encoger el cuello y apura a RIR 0-1: es aislamiento de baja fatiga.',
       },
       {
         id: 'posterior-polea-d5',
@@ -1000,33 +991,8 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         repMax: 15,
         restSec: 75,
         loadStep: 2.5,
-        note: 'Segunda dosis de dorsal en la semana para forzar la amplitud.',
-      },
-      {
-        id: 'triceps-catana',
-        name: 'Extensiones catana (polea)',
-        muscle: 'Tríceps',
-        equipment: 'Polea',
-        sets: 2,
-        repMin: 12,
-        repMax: 15,
-        restSec: 60,
-        loadStep: 1.25,
-        note: 'Cuerda por detrás de la nuca, énfasis en estiramiento. 2 series y no 3: entre los 4 ejercicios de tríceps y el trabajo que le llega de los press, el tríceps se salía por arriba del rango recomendado, y no es una prioridad de este bloque. Mejor esa fatiga para las piernas.',
-      },
-      {
-        id: 'antebrazo-polea-d5',
-        movementId: 'antebrazo-polea',
-        swaps: SWAPS_ANTEBRAZO,
-        name: 'Curl de antebrazo en polea',
-        muscle: 'Antebrazo',
-        equipment: 'Polea',
-        sets: 3,
-        repMin: 12,
-        repMax: 15,
-        restSec: 45,
-        loadStep: 1.25,
-        note: 'Dosis 3/3 de la semana. Trabajamos el antebrazo por ser punto débil.',
+        trimmable: true,
+        note: 'Segunda dosis de dorsal de la semana, para que la espalda no se quede a 1x. Recortable: si el día se alarga, esto es lo que sobra. La espalda tiene tres ejercicios el jueves.',
       },
     ],
   },

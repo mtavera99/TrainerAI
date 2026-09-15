@@ -42,9 +42,11 @@ import { plannedSets, sessionsOfWeek } from './progression'
 export const VOLUME_TARGETS: Record<MuscleGroup, [number, number]> = {
   // --- Prioridades del bloque: parte alta de la banda ---
   Cuádriceps: [12, 20],
-  Femoral: [10, 18],
+  // Pasa a mantenimiento: no era prioridad y era el músculo con peor
+  // adherencia real del programa (64% de lo planificado).
+  Femoral: [8, 16],
   Glúteo: [8, 16],
-  Espalda: [12, 20],
+  Espalda: [10, 20],
   'Hombro lateral': [10, 18],
   Antebrazo: [6, 12], // punto débil, pero es un músculo pequeño
   // --- Mantener y progresar: parte media ---
@@ -67,8 +69,12 @@ export const VOLUME_TARGETS: Record<MuscleGroup, [number, number]> = {
   // posterior necesita ese suelo para equilibrar el hombro (estética y salud
   // articular). Con el mínimo en 4, las 4 series que había salían "ok".
   'Hombro posterior': [8, 14],
-  // Necesita poco trabajo DIRECTO porque se lleva media serie de cada press.
-  'Hombro anterior': [6, 12],
+  // Sin trabajo directo en el bloque 3: el press militar es lo que se sacrificó
+  // para que el brazo entrara fresco en el día de brazos. Se queda con las 4,5
+  // series fraccionadas que le llegan de los tres press del día de empuje, que
+  // para un músculo que no es objetivo del bloque es suficiente. Si el hombro
+  // anterior se estanca, es lo primero que volvería a entrar.
+  'Hombro anterior': [4, 10],
   // --- Asistencia ---
   Gemelos: [6, 14],
   Core: [6, 12],
@@ -106,14 +112,27 @@ export const MUSCLE_REGIONS: { label: string; members: MuscleGroup[] }[] = [
   { label: 'Brazo', members: ['Bíceps', 'Tríceps', 'Antebrazo'] },
 ]
 
-/** Músculos que este bloque prioriza (se marcan en la app) */
+/**
+ * Músculos que este bloque prioriza (se marcan en la app).
+ *
+ * BLOQUE 3 · Corregido con lo que Santiago reporta al cerrar el bloque 2:
+ *  · El cuádriceps sí era la prioridad de pierna. El FEMORAL nunca lo fue: se
+ *    colgó de la etiqueta "pierna = prioridad nº1" y acabó con 8-11 series
+ *    semanales y la peor adherencia de todo el programa (64%). Pasa a
+ *    mantenimiento, sin recortarle series: la pierna "está en el punto
+ *    correcto" y no se toca, solo deja de reclamar volumen extra.
+ *  · BÍCEPS, TRÍCEPS y ANTEBRAZO entran como prioridad. Venía de entrenar
+ *    brazo dos veces por semana con más volumen y el cambio se notó: es el
+ *    grupo que reporta "súper apagado".
+ *  · El hombro sale de la lista de prioridades porque ya responde bien. No se
+ *    le recorta nada; simplemente deja de competir por el tiempo.
+ */
 export const PRIORITY_MUSCLES: MuscleGroup[] = [
   'Cuádriceps',
-  'Femoral',
-  'Glúteo',
-  'Espalda',
-  'Hombro lateral',
+  'Bíceps',
+  'Tríceps',
   'Antebrazo',
+  'Espalda',
 ]
 
 export type VolumeStatus = 'bajo' | 'ok' | 'alto'

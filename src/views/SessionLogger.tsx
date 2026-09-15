@@ -405,6 +405,14 @@ export default function SessionLogger({
                     {ex.primary && (
                       <span className="chip bg-brand-500/15 text-brand-300">principal</span>
                     )}
+                    {/* Qué se puede dejar sin hacer si el tiempo aprieta. Antes
+                        la app no opinaba y lo que se caía era siempre lo último
+                        de la lista, que resultaban ser los brazos. */}
+                    {ex.trimmable && (
+                      <span className="chip bg-slate-700/70 text-slate-400">
+                        recortable
+                      </span>
+                    )}
                     {swap && (
                       <span className="chip bg-violet-500/15 text-violet-300">sustituido</span>
                     )}

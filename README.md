@@ -31,18 +31,42 @@ npm run preview  # previsualizar el build
 
 ## El programa (Bloque 2 · 10 semanas)
 
-Diseñado con **tus máquinas reales** y prioridades: **pierna (prioridad nº1)** sin cargar la
-lumbar → espalda → hombros → mantener pecho → integrar running. Juegas **fútbol los viernes**.
+Diseñado con **tus máquinas reales**. Prioridades del bloque 3, corregidas con lo
+que reportaste al cerrar el bloque 2:
+
+1. **Brazo** (bíceps, tríceps, antebrazo) — el grupo que quedó apagado
+2. **Cuádriceps** sin cargar la lumbar — la pierna está en su punto, no se toca
+3. **Espalda**
+4. Hombro: responde bien, se mantiene
+5. Pecho: mantenimiento
+6. Femoral: **ya no es prioridad**. Se colgó de la etiqueta "pierna = prioridad
+   nº1" y acabó con 8-11 series semanales y la peor adherencia del programa
+   (64%). No se le recorta nada, solo deja de reclamar volumen extra.
+
+Juegas **fútbol los viernes**.
 
 | Día | Enfoque | Series |
 |-----|---------|--------|
 | Lunes | **Pierna A** · péndulo *o* hack, prensa unilateral, extensiones, curl femoral tumbado, gemelos de pie, colgado | 20 → 26 |
-| Martes | Empuje · press ancho, inclinado Smith, aperturas, cruce, laterales, tríceps ×2, antebrazo | 24 |
-| Miércoles | **Pierna B** · curl femoral sentado, hip thrust, prensa profunda, aductores, gemelos sentado, crunch | 21 → 27 |
-| Jueves | Espalda + Bíceps · jalón MAG, remo máquina, pull over, deltoide posterior, laterales, curl sentado, bayesian, antebrazo | 26 |
+| Martes | Empuje · press ancho, inclinado Smith, **tríceps ×2, antebrazo**, aperturas, laterales | 22 → 24 |
+| Miércoles | **Pierna B** · curl femoral sentado, hip thrust, prensa profunda, aductores, gemelos sentado, crunch | 21 → 28 |
+| Jueves | Espalda + Bíceps · jalón MAG, remo máquina, pull over, **curl bíceps**, deltoide posterior, laterales | 21 → 24 |
 | Viernes | Fútbol ⚽ | — |
-| Sábado | Hombro + Brazos · press militar Smith, laterales, deltoide posterior, pull over, predicador, copa, catana, antebrazo | 24 |
+| Sábado | **Brazos** + Hombro · predicador, copa, bayesian, antebrazo, laterales, posterior, pull over | 24 → 27 |
 | Domingo | Descanso total | — |
+
+### El orden del día es la lista de prioridad de recorte
+
+Quedarse sin tiempo no es una excepción: pasa casi todas las semanas. El
+problema no era eso, era que la app no opinaba sobre **qué** recortar, así que
+lo que se caía era siempre lo último de la lista. Y lo último eran los brazos:
+en el día de empuje, press cerrado y antebrazo; en el día llamado *Hombro +
+Brazos*, el bíceps empezaba en 5ª posición.
+
+Ahora el orden de cada día es su orden de importancia, y los ejercicios que
+tienen **otra dosis en la semana** van marcados como `recortable` en la app: la
+3ª tanda de laterales, la 2ª de dorsal, el aislamiento de pecho. Si el tiempo
+aprieta, pierdes redundancia en lugar de perder tu prioridad.
 
 ### Qué día se corre
 
@@ -75,24 +99,30 @@ entrenamiento y un músculo se queda corto, se ve al instante.
 
 | Músculo | Frecuencia | Series directas (S1-3 → S7-9) |
 |---|---|---|
+| Bíceps ⭐ | 2x | 11 → 14 |
+| Tríceps ⭐ | 2x | 10 → 12 |
+| Antebrazo ⭐ | 2x | 7 → 8 |
 | Cuádriceps ⭐ | 2x | 13 → 18 |
-| Femoral ⭐ | 2x | 8 → 11 |
-| Glúteo ⭐ | 1x (+ fútbol) | 4 → 5 |
-| Gemelos | 2x | 7 → 9 |
 | Espalda ⭐ | 2x | 13 → 14 |
-| Deltoide lateral ⭐ | 3x | 11 |
-| Antebrazo ⭐ | 3x | 9 → 10 |
-| Tríceps | 2x | 11 → 13 |
-| Bíceps | 2x | 9 → 12 |
+| Femoral | 2x | 8 → 11 |
+| Glúteo | 1x (+ fútbol) | 4 → 5 |
+| Gemelos | 2x | 7 → 9 |
+| Deltoide lateral | 3x | 10 |
+| Hombro posterior | 2x | 7 → 8 |
 | Core | 2x | 6 → 8 |
+| Pecho | 1x | 9 |
 | Aductores | 1x | 3 |
-| Pecho | 1x | 11 |
-| Hombro anterior / posterior | 2x / 2x | 3 / 7 → 8 |
+| Hombro anterior | — | 0 directas (4,5 efectivas de los press) |
 
 En el bloque 2, **solo la pierna escalaba**: sumaba 14 series en 10 semanas
 mientras el brazo, la espalda, el posterior y el core se quedaban exactamente
-igual de la primera a la última semana. Ahora escalan todos los grupos que
-tienen margen.
+igual de la primera a la última semana. Ahora escalan todos los grupos con
+margen, y los 14 músculos caen dentro de su rango en las cuatro fases.
+
+El antebrazo pasa de 3x a **2x con más series por sesión**: tres dosis de 3
+series repartidas en tres días era mucho tiempo de cambio de máquina para un
+músculo pequeño, y la tercera se caía siempre. Dos dosis de 3-4 series que sí se
+hacen valen más que tres planificadas de las que llegan dos.
 
 ### Cómo se cuenta el volumen
 
