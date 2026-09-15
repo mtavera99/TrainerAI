@@ -17,6 +17,7 @@ import {
   defaultState,
   exportState,
   loadState,
+  migrate,
   saveState,
 } from '../lib/storage'
 
@@ -30,6 +31,7 @@ interface AppContextValue {
   deleteRun: (id: string) => void
   logBodyweight: (weightKg: number, date?: string) => void
   completeOnboarding: () => void
+  startNewBlock: () => void
   resetAll: () => void
   exportJSON: () => string
   importJSON: (json: string) => boolean
@@ -101,6 +103,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
         }),
       completeOnboarding: () =>
         setState((s) => ({ ...s, onboarded: true })),
+      /**
+       * Cerrar el bloque y empezar el siguiente en la semana 1.
+       *
+       * NO borra nada: el historial completo se conserva y, como el motor de
+       * progresión lee por fecha y no por número de semana, las cargas del
+       * bloque nuevo arrancan justo donde las dejaste. Lo único que se reinicia
+       * es la periodización: vuelves a Acumulación con RIR 3 y a las series
+       * base, que es de lo que trata empezar un bloque.
+       */
+      startNewBlock: () =>
+        setState((s) => ({
+          ...s,
+          currentBlock: (s.currentBlock ?? 1) + 1,
+          currentWeek: 1,
+        })),
       resetAll: () => {
         clearState()
         setState(defaultState())
@@ -109,7 +126,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       importJSON: (json) => {
         try {
           const parsed = JSON.parse(json) as AppState
-          setState({ ...defaultState(), ...parsed })
+          // Un respaldo puede venir de una versión anterior del esquema, así
+          // que pasa por las mismas migraciones que el arranque normal.
+          setState(migrate({ ...defaultState(), ...parsed }))
           return true
         } catch {
           return false

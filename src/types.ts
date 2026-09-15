@@ -139,6 +139,13 @@ export interface WorkoutDayTemplate {
 export type ProgressionAction =
   | 'primera-vez'
   | 'subir-peso'
+  /**
+   * Subida forzada por meseta de carga: llevas 3+ sesiones moviendo el mismo
+   * peso con todas las series dentro del rango. No es que no progreses, es que
+   * el rango era tan ancho que nunca se tocaba el techo y la app te dejaba
+   * clavado. Aquí sube ella.
+   */
+  | 'forzar-subida'
   | 'sumar-reps'
   /**
    * Alguna serie se cayó por debajo del mínimo del rango: la carga es correcta
@@ -211,6 +218,16 @@ export interface LoggedExercise {
 export interface SessionLog {
   id: string
   dayId: string
+  /**
+   * Bloque al que pertenece la sesión. Ausente = bloque 1 (todas las sesiones
+   * guardadas antes de que existiera este campo).
+   *
+   * Sin esto, al empezar un bloque nuevo la semana volvía a 1 y la app
+   * encontraba la sesión del MISMO día y MISMA semana del bloque anterior y te
+   * la abría para editarla encima. El historial no se perdía por arte de magia:
+   * lo sobreescribías tú sin saberlo.
+   */
+  block?: number
   week: number
   /** ISO date */
   date: string
@@ -282,6 +299,8 @@ export interface PhaseConfig {
 export interface AppState {
   version: number
   profile: Profile
+  /** Bloque en curso. Empieza en 1 y sube al cerrar un bloque de 10 semanas. */
+  currentBlock: number
   currentWeek: number
   blockLengthWeeks: number
   sessions: SessionLog[]
