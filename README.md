@@ -48,12 +48,34 @@ Juegas **fútbol los viernes**.
 | Día | Enfoque | Series |
 |-----|---------|--------|
 | Lunes | **Pierna A** · péndulo *o* hack, prensa unilateral, extensiones, curl femoral tumbado, gemelos de pie, colgado | 20 → 26 |
-| Martes | Empuje · press ancho, inclinado Smith, **tríceps ×2, antebrazo**, aperturas, laterales | 22 → 24 |
+| Martes | Empuje · press ancho, inclinado Smith, **tríceps ×2, antebrazo**, laterales, aperturas | 23 → 25 |
 | Miércoles | **Pierna B** · curl femoral sentado, hip thrust, prensa profunda, aductores, gemelos sentado, crunch | 21 → 28 |
-| Jueves | Espalda + Bíceps · jalón MAG, remo máquina, pull over, **curl bíceps**, deltoide posterior, laterales | 21 → 24 |
+| Jueves | Espalda + Bíceps · jalón MAG, remo máquina, pull over, **curl bíceps**, deltoide posterior, laterales, antebrazo | 25 → 28 |
 | Viernes | Fútbol ⚽ | — |
-| Sábado | **Brazos** + Hombro · predicador, copa, bayesian, antebrazo, laterales, posterior, pull over | 24 → 27 |
+| Sábado | **Brazos** + Hombro · predicador, copa, bayesian, antebrazo, catana, press militar, posterior, pull over | 27 → 30 |
 | Domingo | Descanso total | — |
+
+### Dónde va el press militar, y por qué no en el día de pecho
+
+En el día de empuje el deltoides **anterior** llega saturado: se lleva 4,4
+series fraccionadas de los tres press (agarre ancho, inclinado y cerrado).
+Meterle ahí 3 series directas es gastarlas en el músculo más fatigado de la
+sesión. El sábado, en cambio, ese mismo músculo llega con 4 días de descanso.
+
+Y al revés: si en el día de empuje se van a gastar series en el hombro, tienen
+que ir a la cabeza **lateral** y a la **posterior**, que son las que dan la forma
+redonda y las únicas que *no* reciben nada de los press.
+
+Consecuencia:
+
+- El **press militar** se va al sábado, en 6ª posición, detrás del brazo. Es el
+  único trabajo directo de deltoides anterior de la semana.
+- Las **laterales del martes** suben de 4 a 5 series y pasan a ser la dosis
+  principal de la semana.
+- El deltoides lateral pasa de **3 dosis pequeñas (4+3+3) a 2 grandes (5+4)**:
+  mismo volumen semanal, y la frecuencia es prácticamente neutra cuando el
+  volumen se iguala. Esas 3 series liberadas son exactamente el tiempo que
+  necesitaba el press militar en el día de brazos.
 
 ### El orden del día es la lista de prioridad de recorte
 
@@ -75,12 +97,14 @@ corta: en el día de empuje, 5 ejercicios y 16 series en lugar de 8 y 25.
 | Día | Completo | Con prisa |
 |---|---|---|
 | Lunes · Pierna A | 6 ej · 20 series | 5 ej · 17 |
-| Martes · Empuje | 8 ej · 25 series | 5 ej · 16 |
+| Martes · Empuje | 7 ej · 23 series | 5 ej · 16 |
 | Miércoles · Pierna B | 6 ej · 21 series | 5 ej · 18 |
-| Jueves · Espalda + Bíceps | 7 ej · 24 series | 5 ej · 18 |
-| Sábado · Brazos + Hombro | 8 ej · 27 series | 6 ej · 21 |
+| Jueves · Espalda + Bíceps | 7 ej · 25 series | 5 ej · 18 |
+| Sábado · Brazos + Hombro | 8 ej · 27 series | 7 ej · 24 |
 
-En los cinco casos el brazo entra completo en la lista corta.
+En los cinco casos el brazo entra completo en la lista corta. El sábado es el
+día más largo del programa **a propósito**: es el día de tu prioridad y casi todo
+lo que hay ahí importa, así que lo único recortable es el pull over.
 
 ### Compensar las series que faltaron: qué dice la evidencia
 
@@ -142,12 +166,12 @@ entrenamiento y un músculo se queda corto, se ve al instante.
 | Femoral | 2x | 8 → 11 |
 | Glúteo | 1x (+ fútbol) | 4 → 5 |
 | Gemelos | 2x | 7 → 9 |
-| Deltoide lateral | 3x | 10 |
+| Deltoide lateral | 2x | 9 |
 | Hombro posterior | 2x | 7 → 8 |
 | Core | 2x | 6 → 8 |
 | Pecho | 1x | 9 |
+| Hombro anterior | 1x | 3 (+ 4,4 fraccionadas de los press) |
 | Aductores | 1x | 3 |
-| Hombro anterior | — | 0 directas (4,5 efectivas de los press) |
 
 En el bloque 2, **solo la pierna escalaba**: sumaba 14 series en 10 semanas
 mientras el brazo, la espalda, el posterior y el core se quedaban exactamente

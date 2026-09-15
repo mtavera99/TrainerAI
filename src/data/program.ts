@@ -616,24 +616,35 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         loadStep: 1.25,
         note: 'Dosis 1/3 de la semana. Rango completo de muñeca, sin prisa. Rango 12-15 y no 12-20: con 8 reps de amplitud nunca llegabas al techo y la app te dejaba con el mismo peso mes tras mes.',
       },
+      // NO HAY PRESS MILITAR EN ESTE DÍA, y es una decisión, no un olvido.
+      //
+      // Lo puse aquí un momento con el argumento genérico de que un press por
+      // encima de la cabeza pertenece al día de empuje. Santiago lo corrigió con
+      // un argumento mejor y específico: el deltoides ANTERIOR llega saturado al
+      // final de este día. Ya se lleva 4,4 series fraccionadas de los tres press
+      // (agarre ancho, inclinado y cerrado), así que 3 series directas encima
+      // caen sobre el músculo más fatigado de la sesión.
+      //
+      // Y sobre todo: si en este día se van a gastar series en el hombro, que
+      // vayan a la cabeza LATERAL y a la POSTERIOR, que son las que dan la forma
+      // redonda y las que NO reciben nada de los press. Por eso las laterales de
+      // este día suben a 5 series y el press militar se va al sábado, donde el
+      // deltoides anterior llega con 4 días de descanso.
       {
-        // Devuelto al programa, pero DETRÁS del brazo y marcado como recortable.
-        // Lo había sacado del día de brazos para hacer sitio; sacarlo del todo
-        // dejaba el deltoides anterior sin nada directo, y eso es más cambio del
-        // que pediste. Aquí encaja mejor que en el sábado: es un empuje y este
-        // es el día de empuje.
-        id: 'press-militar-smith',
-        name: 'Press militar en Smith (barra)',
-        muscle: 'Hombro anterior',
-        equipment: 'Smith',
-        sets: 3,
-        repMin: 8,
-        repMax: 12,
-        restSec: 120,
+        id: 'lateral-maquina-d2',
+        movementId: 'lateral-maquina',
+        swaps: SWAPS_LATERAL,
+        name: 'Elevaciones laterales en máquina (de pie)',
+        muscle: 'Hombro lateral',
+        equipment: 'Máquina',
+        sets: 5,
+        repMin: 12,
+        repMax: 16,
+        restSec: 60,
         loadStep: 2.5,
-        secondary: { 'Hombro lateral': 0.5, Tríceps: 0.5 },
+        primary: true,
         trimmable: true,
-        note: 'Estable, como te gusta. Baja a la clavícula sin forzar el hombro. Va detrás del tríceps a propósito: el deltoides anterior ya se lleva 4,4 series fraccionadas de los press de este día, así que si hay que dejar algo, se deja esto antes que el brazo.',
+        note: 'Sin impulso, lidera con el codo, tensión constante. Sube de 4 a 5 series y pasa a ser la dosis PRINCIPAL de deltoides lateral de la semana: en este día el hombro que merece tus series es el lateral, no el anterior, porque el anterior ya viene saturado de los tres press y el lateral no recibe nada de ellos. Recortable solo como último recurso, cuando ya has dejado las aperturas.',
       },
       {
         id: 'aperturas-maquina-inclinada',
@@ -649,21 +660,6 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         emphasis: 'estirado',
         trimmable: true,
         note: 'Estiramiento máximo del pectoral, aprieta 1 s en el centro. Es el único aislamiento de pecho que queda: el cruce de cables se ha quitado para hacer sitio al brazo sin alargar el día. Ojo, aquí llevabas 9 sesiones seguidas en 10 kg porque el tope de subida de la app no dejaba ni poner un disco más; ya está arreglado, sube.',
-      },
-      {
-        id: 'lateral-maquina-d2',
-        movementId: 'lateral-maquina',
-        swaps: SWAPS_LATERAL,
-        name: 'Elevaciones laterales en máquina (de pie)',
-        muscle: 'Hombro lateral',
-        equipment: 'Máquina',
-        sets: 4,
-        repMin: 12,
-        repMax: 16,
-        restSec: 60,
-        loadStep: 2.5,
-        trimmable: true,
-        note: 'Sin impulso, lidera con el codo, tensión constante. Va al final y marcada como recortable no porque no importe, sino porque el hombro es el grupo que mejor te está respondiendo y tiene tres dosis en la semana: si algún día hay que dejar algo, que sea una de las tres, no la única de bíceps.',
       },
     ],
   },
@@ -758,13 +754,13 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         name: 'Elevaciones laterales en máquina (de pie)',
         muscle: 'Hombro lateral',
         equipment: 'Máquina',
-        sets: 3,
+        sets: 4,
         repMin: 12,
         repMax: 16,
         restSec: 60,
         loadStep: 2.5,
         trimmable: true,
-        note: 'Dosis 2ª de tres del deltoide lateral. Recortable: el lateral ya está cubierto martes y sábado, así que es lo primero que sobra si el tiempo aprieta.',
+        note: 'Segunda y última dosis de deltoides lateral. El lateral pasa de 3 dosis pequeñas a 2 más grandes (5 el martes + 4 hoy): mismo volumen semanal, y la frecuencia es prácticamente neutra cuando el volumen se iguala, así que se gana el tiempo que le hacía falta al día de brazos. Recortable: es la segunda de dos.',
       },
       {
         // Devuelto al programa. Lo había quitado para acortar el día, pero
@@ -993,20 +989,34 @@ export const WORKOUT_DAYS: WorkoutDayTemplate[] = [
         note: 'Cuerda por detrás de la nuca, énfasis en estiramiento. Sube de 2 a 3 series: ahora el tríceps es prioridad y esto es volumen de brazo, que es justo lo que hay que subir.',
       },
       {
-        id: 'lateral-maquina-d5',
-        movementId: 'lateral-maquina',
-        swaps: SWAPS_LATERAL,
-        name: 'Elevaciones laterales en máquina (de pie)',
-        muscle: 'Hombro lateral',
-        equipment: 'Máquina',
+        // EL PRESS MILITAR VA AQUÍ, no en el día de empuje.
+        //
+        // Es el único trabajo directo de deltoides anterior de la semana, y este
+        // es el único día en el que ese músculo llega fresco: el martes termina
+        // con 4,4 series fraccionadas encima de los tres press de pecho. La misma
+        // serie produce más aquí que allí, y de paso el día de empuje se queda
+        // libre para gastar sus series de hombro en el lateral, que es una de las
+        // cabezas que da la forma redonda y que no recibe nada de los press.
+        //
+        // Va en 6ª posición, detrás del brazo: es un día de brazos.
+        id: 'press-militar-smith',
+        name: 'Press militar en Smith (barra)',
+        muscle: 'Hombro anterior',
+        equipment: 'Smith',
         sets: 3,
-        repMin: 12,
-        repMax: 16,
-        restSec: 60,
+        repMin: 8,
+        repMax: 12,
+        restSec: 120,
         loadStep: 2.5,
-        trimmable: true,
-        note: 'Tercera dosis semanal de laterales. En aislamiento como este puedes apretar más que en los básicos: llega a RIR 0-1 en la última serie sin miedo. Recortable: el hombro es lo que mejor te responde y ya lo trabajas martes y jueves.',
+        secondary: { 'Hombro lateral': 0.5, Tríceps: 0.5 },
+        note: 'Estable, como te gusta. Baja a la clavícula sin forzar el hombro. Único trabajo directo de deltoides anterior de la semana, y colocado el día en el que ese músculo llega descansado: el martes acaba saturado de los press de pecho. Ojo, aquí venías estancado (32,5 kg con el 1RM estimado bajando un 6%): con el brazo delante y el hombro fresco deberías notar la diferencia.',
       },
+      // NO HAY LATERALES EN ESTE DÍA. El deltoides lateral pasa de tres dosis
+      // pequeñas (4+3+3) a dos grandes (5 el martes + 4 el jueves): mismo volumen
+      // semanal, y la frecuencia es prácticamente neutra cuando el volumen se
+      // iguala. Esas 3 series se convierten en el tiempo que necesitaba el press
+      // militar aquí, con el deltoides anterior fresco. El hombro no pierde nada
+      // y el brazo gana el día entero para él.
       {
         id: 'posterior-delt-pec-d5',
         movementId: 'posterior-delt-pec',
